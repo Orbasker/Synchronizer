@@ -2,8 +2,9 @@ import datetime
 import json
 import logging
 
-from handlers import firestore_handler, giscloud_handler, monday_handler
-
+from handlers.firestore_handler import FirestoreHandler
+from handlers.giscloud_handler import GisCloudHandler
+from handlers.monday_handler import MondayClient,Item,Coordinates
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,14 +17,14 @@ conf = json.load(
 )
 
 if __name__ == '__main__':
-    state_handler = firestore_handler.FirestoreHandler(
+    state_handler = FirestoreHandler(
         cred=conf['FIREBASE']['CREDENTIALS'],
     )
 
-    gis_handler = giscloud_handler.GisCloudHandler(
+    gis_handler = GisCloudHandler(
         api_key=conf['GIS_CLOUD']['API_KEY'],
     )
-    monday_handler = monday_handler.MondayClient(
+    monday_handler = MondayClient(
         api_key=conf['MONDAY']['API_KEY'],
     )
 
