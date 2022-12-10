@@ -43,8 +43,8 @@ class GisCloudHandler:
             item['data']['date'] = datetime.strptime(
                 date_str, '%Y-%m-%dT%H:%M:%S',
             )
-
-            item['data']['sn_nema'] = re.search(r'([1-9][0-9]*\d{6,8})', sn_nema).group()
+            regex_result = re.search(r'([1-9][0-9]*\d{6,8})', sn_nema)
+            item['data']['sn_nema'] = regex_result.group() if regex_result else sn_nema
 
             gis_handler = GisCloudHandler(self.api_key)
             picture_data_raw = gis_handler.get_sn_picture_data(

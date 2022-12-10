@@ -12,18 +12,18 @@ class Coordinates:
 class Item:
     def __init__(
         self,
-        sn_nema: str,
-        insertion_date: datetime,
-        coordinates: Coordinates,
-        picture: str,
-        picture_raw_data: bytes,
-        notes: str,
-        old_sn: str,
-        lamp_type: str,
-        type_switch: str,
+        sn_nema: str= None,
+        insertion_date: datetime= None,
+        coordinates: Coordinates= None,
+        picture: str= None,
+        picture_raw_data: bytes= None,
+        notes: str= None,
+        old_sn: str= None,
+        lamp_type: str= None,
+        type_switch: str = None,
         _id: str = None,
     ) -> None:
-        self.sn = sn_nema
+        self.sn = sn_nema 
         self.date = insertion_date
         self.address = coordinates
         self.picture = picture
