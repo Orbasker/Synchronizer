@@ -21,7 +21,8 @@ class Item:
         old_sn: str= None,
         lamp_type: str= None,
         type_switch: str = None,
-        _id: str = None,
+        item_id: str = None,
+        reason: str = None,
     ) -> None:
         self.sn = sn_nema 
         self.date = insertion_date
@@ -32,7 +33,8 @@ class Item:
         self.old_sn = old_sn
         self.lamp_type = lamp_type
         self.type_switch = type_switch
-        self.id = _id
+        self.item_id = item_id
+        self.reason = reason
 
 
 class MondayClient:
@@ -44,13 +46,16 @@ class MondayClient:
         }
 
     def _query(self, query):
-        return requests.post(
+        response = requests.post(
             url=self._base_url,
             headers=self._headers,
             json={
                 'query': query,
             }
         ).json()
+        print(response)
+        return response
+        
 
     def add_item(
         self,
@@ -62,36 +67,20 @@ class MondayClient:
         formatted_status = 'לא ידוע' if not item.lamp_type else item.lamp_type
         formatted_type_switch = '' if not item.type_switch else item.type_switch
         payload = f'''
-            mutation {{
-                create_item(
-                    board_id: {board_id},
-                    group_id: "{group_id}",
-                    item_name: "{item.sn}",
-                    create_labels_if_missing: true,
-                    column_values: "{{
-                        \\"text4\\": \\"{item.notes}\\",
-                        \\"location\\": {{
-                            \\"lat\\": \\"{item.address.lat}\\",
-                            \\"lng\\":\\"{item.address.long}\\",
-                            \\"address\\":\\"{item.sn}\\"
-                        }},
-                        \\"date4\\" : {{ 
-                            \\"date\\": \\"{formatted_date}\\"
-                        }},
-                        \\"text7\\": \\"{item.old_sn}\\",
-                        \\"label3\\": {{
-                             \\"label\\": \\"{formatted_status}\\"
-                        }},
-                        \\"status_1\\": {{
-                             \\"label\\": \\"{formatted_type_switch}\\"
-                        }}
+        mutation {{
+            create_item(
+                board_id: {board_id},
+                group_id: "{group_id}",
+                item_name: "{item.sn}",
+                create_labels_if_missing: true,
+                column_values: "{{\\"text4\\": \\"{item.notes}\\", \\"location\\": {{\\"lat\\": \\"{item.address.lat}\\", \\"lng\\":\\"{item.address.long}\\", \\"address\\":\\"{item.sn}\\"}}, \\"date4\\": {{\\"date\\": \\"{formatted_date}\\"}}, \\"text7\\": \\"{item.old_sn}\\", \\"label3\\": {{\\"label\\": \\"{formatted_status}\\"}}, \\"status_1\\": {{\\"label\\": \\"{formatted_type_switch}\\"}}}}"
+            ) 
+            {{
+                id
+            }}
+        }}'''
 
-                    }}"
-                ) 
-                {{
-                    id
-                }}
-            }}'''
+
 
         return self._query(query=payload)['data']['create_item']['id']
 
@@ -127,34 +116,30 @@ class MondayClient:
         formatted_date = new_item.date.strftime('%Y-%m-%d')
         formatted_status = 'לא ידוע' if not new_item.lamp_type else new_item.lamp_type
         formatted_type_switch = '' if not new_item.type_switch else new_item.type_switch
+        column_values = {
+        "text4": new_item.notes,
+        "location": {
+            "lat": new_item.address.lat,
+            "lng": new_item.address.long,
+            "address": new_item.sn,
+        },
+        "date4": {"date": formatted_date},
+        "text7": new_item.old_sn,
+        "label3": {"label": formatted_status},
+        "status_1": {"label": formatted_type_switch},
+        
+        }
+        column_values_str = json.dumps(column_values)
+        
         update_query = f''' mutation {{
-                        change_multiple_column_values (
-                            board_id: {board_id}
-                            item_id: {new_item.id}
-                                column_values: "{{
-                                    \\"text4\\": \\"{new_item.notes}\\",
-                                    \\"location\\": {{
-                                        \\"lat\\": \\"{new_item.address.lat}\\",
-                                        \\"lng\\": \\"{new_item.address.long}\\",
-                                        \\"address\\": \\"{new_item.sn}\\"
-                                                }}, 
-                                            \\"date4\\" : {{
-                                    \\"date\\": \\"{formatted_date}\\"
-                                    }},
-                                            \\"text7\\": \\"{new_item.old_sn}\\",
-                                                \\"label3\\": {{
-                                    \\"label\\": \\"{formatted_status}\\"
-                                    }},
-                                            \\"status_1\\": {{
-                                    \\"label\\": \\"{formatted_type_switch}\\"
-                                    }}
-                                            
-                                    }}"
-                                ) 
-                            {{
-                                id
-                            }} 
-                        }}'''
+                    change_multiple_column_values (
+                        board_id: {board_id}
+                        item_id: {new_item.item_id}
+                            column_values: '{column_values_str}'
+                    ) 
+                    {{
+                        id
+                    }} 
+                    }}'''
         self._query(update_query)
 
-    

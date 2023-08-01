@@ -39,14 +39,19 @@ class GisCloudHandler:
         for item in layers:
             sn_nema = item['data']['sn_nema']
             date_raw_str = item['data']['date']
-            date_str = date_raw_str.split('.')[0] if '.' in date_raw_str else date_raw_str.split('+')[0]
+            if date_raw_str is None:
+                date_str = '2021-01-01T00:00:00'
+            else:
+                date_str = date_raw_str.split('.')[0] if '.' in date_raw_str else date_raw_str.split('+')[0]
             item['data']['date'] = datetime.strptime(
                 date_str, '%Y-%m-%dT%H:%M:%S',
             )
-            regex_result = re.search(r'([1-9][0-9]*\d{6,8})', sn_nema)
-            item['data']['sn_nema'] = regex_result.group() if regex_result else sn_nema
-
             gis_handler = GisCloudHandler(self.api_key)
-            picture_data_raw = gis_handler.get_sn_picture_data(
-                item=item, layer_id=layer_id, feature_id=item['__id'])
+            item['picture_data_raw'] = gis_handler.get_sn_picture_data(
+            item=item, layer_id=layer_id, feature_id=item['__id'])
+            if sn_nema is not None:
+                regex_result = re.search(r'([1-9][0-9]*\d{6,8})', sn_nema)
+                item['data']['sn_nema'] = regex_result.group() if regex_result else sn_nema
+
+           
             yield item

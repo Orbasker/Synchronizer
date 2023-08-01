@@ -20,10 +20,18 @@ class FirestoreHandler(object):
         )
 
     def update_record(self, old_record: dict, new_record: dict):
-        new_record.pop('raw_image', None)
+        # if new_record['raw_image']:
+            # new_record.pop('raw_image', None)
         self.db.collection(self.COLLECTION).document(
             old_record['sn_nema'],
         ).update(new_record)
 
     def get_all_records(self):
         return [record._data for record in self.db.collection(self.COLLECTION).get()]
+    
+    def get_record_by_id(self, id: str):
+        return self.db.collection(self.COLLECTION).document(id).get().to_dict()
+
+    def check_record_exists(self, record_id: str) -> bool:
+        doc_ref = self.db.collection(self.COLLECTION).document(record_id)
+        return doc_ref.get().exists
