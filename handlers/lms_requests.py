@@ -1,11 +1,11 @@
 import json
 from hashlib import md5
-
+import os
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-conf = json.load(open(".env"))
+# conf = json.load(open(".env"))
 
 
 class DeviceData:
@@ -79,8 +79,8 @@ class LMSRequest:
     # Define other methods here...
     def get_access_token(self):
         url = f"{self.BASE_URL}/token"
-        username = conf["LMS"]["API_USERNAME"]
-        password = conf["LMS"]["API_PASSWORD"]
+        username = os.getenv('LMS_API_USERNAME')
+        password = os.getenv('LMS_API_PASSWORD')
         hashed_password = md5(password.encode()).hexdigest()
         data = f"grant_type=password&username={username}&password={hashed_password}&client_id=ngAuthApp"
         response = requests.post(url=url, data=data)
