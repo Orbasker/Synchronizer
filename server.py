@@ -36,7 +36,7 @@ def get_sites():
             pole="111111",
             latitude="31.1532",
             longitude="34.1234",
-            idGateway=1,
+            id_gateway=1,
         )
         new_sn = lms_request.create_device(group_id=1, device_data=new_sn_data.to_json())
         return {"session_site": session_site, "all_groups": all_groups, "all_sns": all_sns, "new_sn": new_sn}

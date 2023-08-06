@@ -1,21 +1,29 @@
-import json
-from hashlib import md5
 import os
+from hashlib import md5
+
 import requests
 from dotenv import load_dotenv
+from pydantic import HttpUrl
 
 load_dotenv()
-# conf = json.load(open(".env"))
 
 
 class DeviceData:
-    def __init__(self, pole=None, latitude=None, longitude=None, serialNumber=None, idGateway=None, idType=1):
+    def __init__(
+        self,
+        pole=None,
+        latitude=None,
+        longitude=None,
+        serial_number=None,
+        id_gateway=None,
+        id_type=1,
+    ):
         self.pole = pole
         self.latitude = latitude
         self.longitude = longitude
-        self.serialNumber = serialNumber
-        self.idGateway = idGateway
-        self.idType = idType
+        self.serialNumber = serial_number
+        self.idGateway = id_gateway
+        self.idType = id_type
 
     def to_json(self):
         return {
@@ -45,22 +53,22 @@ class DeviceData:
     def get_longitude(self):
         return self.longitude
 
-    def set_serialNumber(self, serialNumber):
-        self.serialNumber = serialNumber
+    def set_serial_number(self, serial_number):
+        self.serialNumber = serial_number
 
-    def get_serialNumber(self):
+    def get_serial_number(self):
         return self.serialNumber
 
-    def set_idGateway(self, idGateway):
-        self.idGateway = idGateway
+    def set_id_gateway(self, id_gateway):
+        self.idGateway = id_gateway
 
-    def get_idGateway(self):
+    def get_id_gateway(self):
         return self.idGateway
 
-    def set_idType(self, idType):
-        self.idType = idType
+    def set_id_type(self, id_type):
+        self.idType = id_type
 
-    def get_idType(self):
+    def get_id_type(self):
         return self.idType
 
 
@@ -69,27 +77,29 @@ class LMSRequest:
         self.BASE_URL = base_url
         self.token = self.get_access_token()
 
-        # self.all_groups = self.get_all_groups()
-        # self.all_devices = self.get_all_devices()
-        # self.all_types = self.get_all_types()
-        # self.all_gateways = self.get_all_gateways()
-        # self.all_commands = self.get_all_commands()
-        # self.all_light_profiles = self.get_all_light_profiles()
-
-    # Define other methods here...
     def get_access_token(self):
         url = f"{self.BASE_URL}/token"
-        username = os.getenv('LMS_API_USERNAME')
-        password = os.getenv('LMS_API_PASSWORD')
+        username = os.getenv("LMS_API_USERNAME")
+        password = os.getenv("LMS_API_PASSWORD")
         hashed_password = md5(password.encode()).hexdigest()
         data = f"grant_type=password&username={username}&password={hashed_password}&client_id=ngAuthApp"
         response = requests.post(url=url, data=data)
         response.raise_for_status()
         return response.json()["access_token"]
 
-    def make_authenticated_request(self, url, method, json_data=None):
+    def make_authenticated_request(
+        self,
+        url: HttpUrl,
+        method: str,
+        json_data: dict = None,
+    ):
         headers = {"Authorization": f"Bearer {self.token}"}
-        response = requests.request(method=method, url=url, headers=headers, json=json_data)
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=headers,
+            json=json_data,
+        )
         response.raise_for_status()
         return response.json()
 
@@ -188,8 +198,7 @@ class LMSRequest:
 
     def get_all_devices(self, group_id):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices"
-        response = self.make_authenticated_request(url, "GET")
-        return response
+        return self.make_authenticated_request(url, "GET")
 
     def get_device_by_serial(self, group_id, serial_number):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
@@ -198,7 +207,11 @@ class LMSRequest:
 
     def create_device(self, group_id, device_data):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices"
-        return self.make_authenticated_request(url=url, method="POST", json_data=device_data)
+        return self.make_authenticated_request(
+            url=url,
+            method="POST",
+            json_data=device_data,
+        )
 
     def update_device(self, group_id, serial_number, device_data):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
@@ -225,14 +238,14 @@ class LMSRequest:
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
-    def create_gateway(self, name, ident, latitude, longitude, idNetworkType=None, macAddress=None):
+    def create_gateway(self, name, ident, latitude, longitude, id_network_type=None, macAddress=None):
         url = f"{self.BASE_URL}/led/gateways"
         data = {
             "name": name,
             "ident": ident,
             "latitude": latitude,
             "longitude": longitude,
-            "idNetworkType": idNetworkType,
+            "idNetworkType": id_network_type,
             "macAddress": macAddress,
         }
         response = self.make_authenticated_request(url, "POST", json=data)
