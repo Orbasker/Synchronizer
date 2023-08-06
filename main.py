@@ -47,8 +47,9 @@ def update_state_records(sns, state_records) -> None:
             state_records_ids.append(sn_data["sn_nema"])
         else:
             logging.warning("ID already exists in state")
-            old_record = state_handler.get_record_by_id(sn_data["sn_nema"])
-            if old_record:
+            if old_record := state_handler.get_record_by_id(
+                sn_data["sn_nema"]
+            ):
                 logging.error("ID not found in state!")
                 sn_date_offset_aware = sn_data["date"].replace(tzinfo=timezone.utc)
                 if old_record["date"] >= sn_date_offset_aware:
