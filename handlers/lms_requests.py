@@ -1,5 +1,4 @@
 import json
-import os
 from hashlib import md5
 
 import requests

@@ -1,9 +1,6 @@
-import datetime
 import json
 import logging
-from datetime import datetime, timezone
-
-from google.cloud import firestore
+from datetime import timezone
 
 from handlers.firestore_handler import FirestoreHandler
 from handlers.giscloud_handler import GisCloudHandler

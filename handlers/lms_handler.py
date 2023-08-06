@@ -1,8 +1,5 @@
 import os
-from datetime import datetime, timedelta
-from hashlib import md5
 
-import requests
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
