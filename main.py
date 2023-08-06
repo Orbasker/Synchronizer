@@ -1,18 +1,21 @@
 import json
 import logging
+import os
 from datetime import timezone
+
+from dotenv import load_dotenv
 
 from handlers.firestore_handler import FirestoreHandler
 from handlers.giscloud_handler import GisCloudHandler
 from handlers.monday_handler import Coordinates, Item, MondayClient
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-
-conf = json.load(open(".env"))
 
 
 def update_state_records(sns, state_records) -> None:
@@ -57,19 +60,24 @@ def update_state_records(sns, state_records) -> None:
 
 if __name__ == "__main__":
     state_handler = FirestoreHandler(
-        cred=conf["FIREBASE"]["CREDENTIALS"],
+        cred={
+            "type": os.getenv("FIRESTORE_TYPE"),
+            "project_id": os.getenv("FIRESTORE_PROJECT_ID"),
+            "private_key_id": os.getenv("FIRESTORE_PRIVATE_KEY_ID"),
+            "private_key": os.getenv("FIRESTORE_PRIVATE_KEY").replace("\\n", "\n"),
+        }
     )
 
     gis_handler = GisCloudHandler(
-        api_key=conf["GIS_CLOUD"]["API_KEY"],
+        api_key=os.getenv("GIS_CLOUD_API_KEY"),
     )
     monday_handler = MondayClient(
-        api_key=conf["MONDAY"]["API_KEY"],
+        api_key=os.getenv("MONDAY_API_KEY"),
     )
 
     logging.info("Getting GIS data")
     sns = gis_handler.get_sns_by_layer_id(
-        layer_id=conf["GIS_CLOUD"]["LAYER_ID"],
+        layer_id=os.getenv("GIS_CLOUD_LAYER_ID"),
     )
 
     logging.info("fetching state records")
@@ -97,7 +105,9 @@ if __name__ == "__main__":
             )
             logging.info("adding to Monday.com")
             response = monday_handler.add_item(
-                board_id=conf["MONDAY"]["BOARD_ID"], group_id=conf["MONDAY"]["GROUP_ID"], item=new_item
+                board_id=os.getenv("MONDAY_BOARD_ID"),
+                group_id=os.getenv("MONDAY_GROUP_ID"),
+                item=new_item,
             )
             item_id = response
             new_record = sn["data"]
@@ -116,7 +126,7 @@ if __name__ == "__main__":
                     state_handler.update_record(old_record=old_record, new_record=sn["data"])
                     logging.info("updating Monday.com")
                     monday_handler.update_item(
-                        board_id=conf["MONDAY"]["BOARD_ID"],
+                        board_id=os.getenv("MONDAY_BOARD_ID"),
                         new_item=Item(
                             sn_nema=sn["data"]["sn_nema"],
                             insertion_date=sn["data"]["date"],
@@ -135,26 +145,4 @@ if __name__ == "__main__":
                         ),
                     )
 
-    # update_state_records(sns,state_records)
     logging.info("Done!")
-    # for record in state_records:
-    #     if record['svg'] == "new install" :
-    #         monday_handler.add_item(
-    #             board_id=conf['MONDAY']['BOARD_ID'],
-    #             group_id=conf['MONDAY']['GROUP_ID'],
-    #             item=Item(
-    #                 sn_nema=record['sn_nema'],
-    #                 insertion_date=record['date'],
-    #                 coordinates=Coordinates(
-    #                     long=record['longitude'],
-    #                     lat=record['latitude'],
-    #                 ),
-    #                 picture=record['picture'],
-    #                 picture_raw_data=record['raw_image'],
-    #                 notes=record['note'],
-    #                 old_sn=record['old_sn'],
-    #                 type_switch=record['type_switches'],
-    #                 lamp_type=record['lamp_type'],
-    #                 reason=record['svg']
-    #             )
-    #         )
