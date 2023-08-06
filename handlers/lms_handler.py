@@ -1,12 +1,10 @@
 import os
-from hashlib import md5
 
-import requests
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from datetime import datetime, timedelta
+
 load_dotenv()
 
 BASE_URL = os.environ["API_BASEURL"]
@@ -23,8 +21,5 @@ async def root():
     return RedirectResponse(url="/docs")
 
 
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

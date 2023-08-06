@@ -1,5 +1,6 @@
-from datetime import datetime
 import json
+from datetime import datetime
+
 import requests
 
 
@@ -12,19 +13,19 @@ class Coordinates:
 class Item:
     def __init__(
         self,
-        sn_nema: str= None,
-        insertion_date: datetime= None,
-        coordinates: Coordinates= None,
-        picture: str= None,
-        picture_raw_data: bytes= None,
-        notes: str= None,
-        old_sn: str= None,
-        lamp_type: str= None,
+        sn_nema: str = None,
+        insertion_date: datetime = None,
+        coordinates: Coordinates = None,
+        picture: str = None,
+        picture_raw_data: bytes = None,
+        notes: str = None,
+        old_sn: str = None,
+        lamp_type: str = None,
         type_switch: str = None,
         item_id: str = None,
         reason: str = None,
     ) -> None:
-        self.sn = sn_nema 
+        self.sn = sn_nema
         self.date = insertion_date
         self.address = coordinates
         self.picture = picture
@@ -40,9 +41,9 @@ class Item:
 class MondayClient:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
-        self._base_url = 'https://api.monday.com/v2'
+        self._base_url = "https://api.monday.com/v2"
         self._headers = {
-            'Authorization': self.api_key,
+            "Authorization": self.api_key,
         }
 
     def _query(self, query):
@@ -50,12 +51,11 @@ class MondayClient:
             url=self._base_url,
             headers=self._headers,
             json={
-                'query': query,
-            }
+                "query": query,
+            },
         ).json()
         print(response)
         return response
-        
 
     def add_item(
         self,
@@ -63,10 +63,10 @@ class MondayClient:
         group_id: str,
         item: Item,
     ) -> str:
-        formatted_date = item.date.strftime('%Y-%m-%d')
-        formatted_status = 'לא ידוע' if not item.lamp_type else item.lamp_type
-        formatted_type_switch = '' if not item.type_switch else item.type_switch
-        payload = f'''
+        formatted_date = item.date.strftime("%Y-%m-%d")
+        formatted_status = "לא ידוע" if not item.lamp_type else item.lamp_type
+        formatted_type_switch = "" if not item.type_switch else item.type_switch
+        payload = f"""
         mutation {{
             create_item(
                 board_id: {board_id},
@@ -78,11 +78,9 @@ class MondayClient:
             {{
                 id
             }}
-        }}'''
+        }}"""
 
-
-
-        return self._query(query=payload)['data']['create_item']['id']
+        return self._query(query=payload)["data"]["create_item"]["id"]
 
     def add_item_picture(
         self,
@@ -90,48 +88,45 @@ class MondayClient:
         image_raw_data: bytes,
     ) -> None:
         payload = {
-            'query': 'mutation ($file: File!) { add_file_to_column (file: $file, item_id: ' + item_id + ', column_id: "files") {id }}'
+            "query": "mutation ($file: File!) { add_file_to_column (file: $file, item_id: "
+            + item_id
+            + ', column_id: "files") {id }}'
         }
 
         files = [
             (
-                'variables[file]', (
-                    'filename',
+                "variables[file]",
+                (
+                    "filename",
                     image_raw_data,
-                    'contenttype',
-                )
+                    "contenttype",
+                ),
             )
         ]
         headers = {
-            'Authorization': self.api_key,
+            "Authorization": self.api_key,
         }
-        response = requests.post(
-            self._base_url,
-            headers=headers,
-            data=payload,
-            files=files
-        )
+        response = requests.post(self._base_url, headers=headers, data=payload, files=files)
 
     def update_item(self, board_id: int, new_item: Item):
-        formatted_date = new_item.date.strftime('%Y-%m-%d')
-        formatted_status = 'לא ידוע' if not new_item.lamp_type else new_item.lamp_type
-        formatted_type_switch = '' if not new_item.type_switch else new_item.type_switch
+        formatted_date = new_item.date.strftime("%Y-%m-%d")
+        formatted_status = "לא ידוע" if not new_item.lamp_type else new_item.lamp_type
+        formatted_type_switch = "" if not new_item.type_switch else new_item.type_switch
         column_values = {
-        "text4": new_item.notes,
-        "location": {
-            "lat": new_item.address.lat,
-            "lng": new_item.address.long,
-            "address": new_item.sn,
-        },
-        "date4": {"date": formatted_date},
-        "text7": new_item.old_sn,
-        "label3": {"label": formatted_status},
-        "status_1": {"label": formatted_type_switch},
-        
+            "text4": new_item.notes,
+            "location": {
+                "lat": new_item.address.lat,
+                "lng": new_item.address.long,
+                "address": new_item.sn,
+            },
+            "date4": {"date": formatted_date},
+            "text7": new_item.old_sn,
+            "label3": {"label": formatted_status},
+            "status_1": {"label": formatted_type_switch},
         }
         column_values_str = json.dumps(column_values)
-        
-        update_query = f''' mutation {{
+
+        update_query = f""" mutation {{
                     change_multiple_column_values (
                         board_id: {board_id}
                         item_id: {new_item.item_id}
@@ -140,6 +135,5 @@ class MondayClient:
                     {{
                         id
                     }} 
-                    }}'''
+                    }}"""
         self._query(update_query)
-
