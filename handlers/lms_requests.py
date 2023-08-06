@@ -215,7 +215,7 @@ class LMSRequest:
 
     def update_device(self, group_id, serial_number, device_data):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
-        response = self.make_authenticated_request(url, "PUT", json=device_data)
+        response = self.make_authenticated_request(url, "PUT", json_data=device_data)
         return response.json()
 
     def delete_device(self, group_id, serial_number):
@@ -238,7 +238,15 @@ class LMSRequest:
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
-    def create_gateway(self, name, ident, latitude, longitude, id_network_type=None, macAddress=None):
+    def create_gateway(
+        self,
+        name,
+        ident,
+        latitude,
+        longitude,
+        id_network_type=None,
+        mac_address=None,
+    ):
         url = f"{self.BASE_URL}/led/gateways"
         data = {
             "name": name,
@@ -246,9 +254,9 @@ class LMSRequest:
             "latitude": latitude,
             "longitude": longitude,
             "idNetworkType": id_network_type,
-            "macAddress": macAddress,
+            "macAddress": mac_address,
         }
-        response = self.make_authenticated_request(url, "POST", json=data)
+        response = self.make_authenticated_request(url, "POST", json_data=data)
         return response.json()
 
     def get_all_gateways(self):
@@ -256,20 +264,29 @@ class LMSRequest:
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
-    def get_gateway_by_id(self, idGateway):
-        url = f"{self.BASE_URL}/led/gateways/{idGateway}"
+    def get_gateway_by_id(self, id_gateway):
+        url = f"{self.BASE_URL}/led/gateways/{id_gateway}"
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
-    def update_gateway(self, idGateway, name, ident, latitude, longitude, idNetworkType=None, macAddress=None):
-        url = f"{self.BASE_URL}/led/gateways/{idGateway}"
+    def update_gateway(
+        self,
+        id_gateway,
+        name,
+        ident,
+        latitude,
+        longitude,
+        id_network_type=None,
+        mac_address=None,
+    ):
+        url = f"{self.BASE_URL}/led/gateways/{id_gateway}"
         data = {
             "name": name,
             "ident": ident,
             "latitude": latitude,
             "longitude": longitude,
-            "idNetworkType": idNetworkType,
-            "macAddress": macAddress,
+            "idNetworkType": id_network_type,
+            "macAddress": mac_address,
         }
         response = self.make_authenticated_request(url, "PUT", json=data)
         return response.json()
@@ -385,7 +402,3 @@ class LMSRequest:
         data = {"startDate": start_date, "endDate": end_date, "idGroups": id_groups}
         response = self.make_authenticated_request(url, "POST", json=data, headers=headers)
         return response.json()
-
-
-# Usage
-# Now you can access data without making additional requests, e.g. lms_request.all_groups
