@@ -17,6 +17,7 @@ lms_request = LMSRequest(lms_base_url)
 @app.on_event("startup")
 async def startup_event():
     load_dotenv()
+    pass
 
 
 @app.get("/")
