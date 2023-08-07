@@ -17,13 +17,6 @@ lms_request = LMSRequest(lms_base_url)
 @app.on_event("startup")
 async def startup_event():
     load_dotenv()
-    pass
-
-
-@app.get("/")
-def hello_world():
-    result = lms_request.sites()
-    return {"result": result, "message": "SUCCESS"}
 
 
 @app.get("/sites")
