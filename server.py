@@ -19,12 +19,6 @@ async def startup_event():
     load_dotenv()
 
 
-@app.get("/")
-def hello_world():
-    result = lms_request.sites()
-    return {"result": result, "message": "SUCCESS"}
-
-
 @app.get("/sites")
 def get_sites():
     result = lms_request.sites()
