@@ -4,6 +4,7 @@ from datetime import datetime
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
+from starlette.responses import RedirectResponse
 
 from handlers.lms_requests import DeviceData, LMSRequest
 from handlers.monday_handler import Coordinates, Item, MondayClient
@@ -17,6 +18,11 @@ lms_request = LMSRequest(lms_base_url)
 @app.on_event("startup")
 async def startup_event():
     load_dotenv()
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/sites")
@@ -90,4 +96,4 @@ async def new_item(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=80)
