@@ -31,4 +31,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: orbasker/synchronizer:${{ github.sha }}
+          tags: orbasker/synchronizer:latest
