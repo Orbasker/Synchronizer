@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          build-args: |
+          secrets: |
             "LMS_API_PASSWORD=${{ secrets.LMS_API_PASSWORD }}"
             "FIREBASE_TYPE=${{ secrets.FIREBASE_TYPE }}"
             "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}"
