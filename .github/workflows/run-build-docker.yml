@@ -10,8 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Checkout code
-        uses: actions/checkout@v2
       - name: create env file from secrets
         run: |
           echo "LMS_API_PASSWORD=${{ secrets.LMS_API_PASSWORD }}" >> .env
