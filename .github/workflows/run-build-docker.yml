@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      - 'barad-add-docker-build'
 
 jobs:
   docker:
