@@ -143,5 +143,4 @@ if __name__ == "__main__":
                             item_id=old_record["item_id"],
                         ),
                     )
-
     logging.info("Done!")
