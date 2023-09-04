@@ -98,10 +98,13 @@ class LMSRequest:
             method=method,
             url=url,
             headers=headers,
-            json=json_data,
+            json=json_data or None,
         )
         response.raise_for_status()
-        return response.json()
+        try:
+            return response.json()
+        except Exception:
+            return response
 
     def get_all_groups(self):
         url = f"{self.BASE_URL}/led/groups"
@@ -220,8 +223,13 @@ class LMSRequest:
 
     def delete_device(self, group_id, serial_number):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
-        response = self.make_authenticated_request(url, "DELETE")
-        return "Device deleted successfully."
+        response = self.make_authenticated_request(url,"DELETE")
+        if response.status_code == 200:
+            return "Device deleted successfully."
+        return "Device could not be deleted."
+        
+        
+       
 
     def associate_device_to_group(self, group_id, serial_number, associate=0):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}?associate={associate}"
