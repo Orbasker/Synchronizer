@@ -222,14 +222,13 @@ class LMSRequest:
         return response.json()
 
     def delete_device(self, group_id, serial_number):
+        if serial_number == "":
+            return "Serial number is empty."
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
-        response = self.make_authenticated_request(url,"DELETE")
+        response = self.make_authenticated_request(url, "DELETE")
         if response.status_code == 200:
             return "Device deleted successfully."
         return "Device could not be deleted."
-        
-        
-       
 
     def associate_device_to_group(self, group_id, serial_number, associate=0):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}?associate={associate}"

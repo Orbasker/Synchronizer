@@ -15,21 +15,24 @@ app = FastAPI()
 lms_base_url = os.getenv("LMS_API_BASEURL")
 lms_request = LMSRequest(lms_base_url)
 conn_settings = ConnectionSettings(
-            server=os.getenv("DB_HOST"),
-            database=os.getenv("DB_NAME"),
-            username=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-        )
-db_conn = AzureDbConnection(conn_settings)       
+    server=os.getenv("DB_HOST"),
+    database=os.getenv("DB_NAME"),
+    username=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+)
+db_conn = AzureDbConnection(conn_settings)
 db_conn.connect()
+
 
 @app.on_event("startup")
 async def startup_event():
     load_dotenv()
 
+
 @app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/docs")
+
 
 @app.post("/fixture")
 async def update_lms(request: Request):
@@ -45,18 +48,19 @@ async def update_lms(request: Request):
             # idIcon=2
         )
         old_sn = item_data.get("old_sn")
-        session_site = lms_request.session('Or Yehuda - Israel')
+        session_site = lms_request.session("Or Yehuda - Israel")
         new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
         old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
         # result = db_conn.delete_fixture(fixture_name=old_sn)
         return {"session_site": session_site, "new_sn": new_sn, "old_sn": old_sn_res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    
+
+
 @app.get("/sites")
 def get_sites():
     # result = lms_request.sites()
-    session_site = lms_request.session('Or Yehuda - Israel')
+    session_site = lms_request.session("Or Yehuda - Israel")
     new_fixture = DeviceData(
         serial_number="10344104",
         pole="10344104",
@@ -89,7 +93,7 @@ def get_sites():
 @app.get("/sites/{site_id}")
 def get_site(site_id: str):
     lms_request.session(site_id)
-    session_site = lms_request.session('Or Yehuda - Israel')
+    session_site = lms_request.session("Or Yehuda - Israel")
     new_fixture = DeviceData(
         serial_number="10344104",
         pole="10344104",
@@ -104,7 +108,7 @@ def get_site(site_id: str):
 @app.post("/giscloud")
 async def new_item(request: Request):
     try:
-        item_data = await request.json()
+        item_data = await request.json().get("data")
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
         sn_nema = item_data.get("sn_nema")
@@ -141,8 +145,8 @@ async def new_item(request: Request):
             group_id=group_id,
             item=new_item,
         )
-        
-        try:          
+
+        try:
             new_fixture = Fixture(
                 name=sn_nema,
                 latitude=coordinates.lat,
@@ -152,25 +156,22 @@ async def new_item(request: Request):
             if db_conn.fixture_exists(sn_nema):
                 fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
             else:
-                fixture_id_res = db_conn.insert_fixture(new_fixture)            
+                fixture_id_res = db_conn.insert_fixture(new_fixture)
             db_conn.delete_fixture(fixture_name=old_sn)
-            
-            
-            
+
             return {
-            "LMS result": "Item added to LMS",
-            "id": fixture_id_res,
-            "Monday message": "Item added to Monday.com",
-            "item_id": item_id,
-            "delete old fixture": "fixture deleted successfully",
-            "fixture_id": old_sn,
-        }
+                "LMS result": "Item added to LMS",
+                "id": fixture_id_res,
+                "Monday message": "Item added to Monday.com",
+                "item_id": item_id,
+                "delete old fixture": "fixture deleted successfully",
+                "fixture_id": old_sn,
+            }
 
         except Exception as e:
             print(e)
         finally:
             db_conn.disconnect()
-        
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

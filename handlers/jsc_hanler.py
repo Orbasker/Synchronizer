@@ -1,11 +1,36 @@
-from dataclasses import dataclass
-from sqlalchemy import create_engine, inspect, Table, Column, Integer, String, MetaData, Float
-import urllib
-import os
 import json
-from dotenv import load_dotenv
+import os
+import urllib
+from dataclasses import dataclass
 from decimal import Decimal
+
+import geopandas as gpd
 import pandas as pd
+from dotenv import load_dotenv
+from sqlalchemy import (
+    Column,
+    Float,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine,
+    inspect,
+)
+
+# Load your polygon data, replace 'your_polygon_data.shp' with your file
+gdf = gpd.read_file("Jnet_0_gws.shp")
+
+from shapely.geometry import Point, Polygon
+
+
+def get_getway_id(lon, lat):
+    point = Point(lon, lat)
+    return next(
+        (row["ID"] for index, row in gdf.iterrows() if point.within(row["geometry"])),
+        None,
+    )
+
 
 load_dotenv()
 
@@ -38,11 +63,12 @@ class DecimalEncoder(json.JSONEncoder):
 @dataclass(frozen=True)
 class ConnectionSettings:
     """Connection Settings."""
+
     server: str
     database: str
     username: str
     password: str
-    driver: str = '{ODBC Driver 18 for SQL Server}'
+    driver: str = "{ODBC Driver 18 for SQL Server}"
     timeout: int = 30
 
 
@@ -66,12 +92,15 @@ class AzureDbConnection:
         return f"mssql+pyodbc:///?odbc_connect={conn_params}"
 
     def connect(self):
-        self.engine = create_engine(
-            self.conn_string, echo=self.echo, fast_executemany=True)
+        self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
         self.conn = self.engine.connect()
         self.metadata = MetaData(bind=self.engine)
         self.tbl_fixtures = Table(
-            'tbl_fixtures', self.metadata, autoload=True, autoload_with=self.engine,)
+            "tbl_fixtures",
+            self.metadata,
+            autoload=True,
+            autoload_with=self.engine,
+        )
 
     def disconnect(self):
         self.conn.close()
@@ -89,34 +118,33 @@ class AzureDbConnection:
 
     def insert_fixture(self, fixture: Fixture):
         fixture_dict = fixture.to_dict()
-        query = self.tbl_fixtures.insert().values(
-            **fixture_dict).returning(self.tbl_fixtures.columns.id)
+        query = self.tbl_fixtures.insert().values(**fixture_dict).returning(self.tbl_fixtures.columns.id)
         result = self.conn.execute(query)
         return result.scalar()
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
         if fixture_id is None:
-            query = self.tbl_fixtures.delete().where(
-                self.tbl_fixtures.columns.name == fixture_name)
+            query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.name == fixture_name)
         else:
-            query = self.tbl_fixtures.delete().where(
-                self.tbl_fixtures.columns.id == fixture_id)
+            query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.id == fixture_id)
         return self.conn.execute(query)
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
         fixture_dict = fixture.to_dict()
         if fixture_id is None:
-            query = self.tbl_fixtures.update().values(
-                **fixture_dict).where(self.tbl_fixtures.columns.name == fixture_name)
+            query = (
+                self.tbl_fixtures.update().values(**fixture_dict).where(self.tbl_fixtures.columns.name == fixture_name)
+            )
         elif fixture_name is None:
-            query = self.tbl_fixtures.update().values(
-                **fixture_dict).where(self.tbl_fixtures.columns.id == fixture_id)
+            query = self.tbl_fixtures.update().values(**fixture_dict).where(self.tbl_fixtures.columns.id == fixture_id)
         return self.conn.execute(query)
 
     def fixture_exists(self, fixture_name) -> bool:
-        query = self.tbl_fixtures.select().where(
-            self.tbl_fixtures.columns.name == fixture_name)
+        query = self.tbl_fixtures.select().where(self.tbl_fixtures.columns.name == fixture_name)
         output = self.conn.execute(query)
         results = output.fetchall()
         return len(results) != 0
 
+
+if __name__ == "__main__":
+    print(get_getway_id(34.791, 32.085))
