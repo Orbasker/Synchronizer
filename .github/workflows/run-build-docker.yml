@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-      - name: Checkout
         uses: actions/checkout@v3
       - name: create env file from secrets
         run: |
@@ -31,6 +30,10 @@ jobs:
           echo "MONDAY_GROUP_ID=${{ secrets.MONDAY_GROUP_ID }}" >> .env
           echo "LMS_API_BASEURL=${{ secrets.LMS_API_BASEURL }}" >> .env
           echo "LMS_API_USERNAME=${{ secrets.LMS_API_USERNAME }}" >> .env
+          echo "DB_HOST=${{secrets.DB_HOST}}" >> .env 
+          echo "DB_USER=${{secrets.DB_USER}}" >> .env
+          echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
+          echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
