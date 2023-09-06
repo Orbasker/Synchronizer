@@ -1,27 +1,19 @@
-import os
-from datetime import datetime
-
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI
 from starlette.responses import RedirectResponse
 
 from handlers.jsc_hanler import AzureDbConnection, ConnectionSettings, Fixture
 from handlers.lms_requests import DeviceData, LMSRequest
 from handlers.monday_handler import Coordinates, Item, MondayClient
 
-app = FastAPI()
+app = FastAPI(
+    dependencies=[Depends(load_lms_token)],
+    debug=True,
+)
 
 lms_base_url = os.getenv("LMS_API_BASEURL")
 lms_request = LMSRequest(lms_base_url)
-conn_settings = ConnectionSettings(
-    server=os.getenv("DB_HOST"),
-    database=os.getenv("DB_NAME"),
-    username=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-)
-db_conn = AzureDbConnection(conn_settings)
-db_conn.connect()
 
 
 @app.on_event("startup")
@@ -178,4 +170,8 @@ async def new_item(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=80,
+    )
