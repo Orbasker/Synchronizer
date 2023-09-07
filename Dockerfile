@@ -18,10 +18,9 @@ RUN curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt
 RUN apt-get update
 RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
-# Optional: Install mssql-tools and add to PATH
+# Optional: Install mssql-tools and set PATH environment variable
 RUN ACCEPT_EULA=Y apt-get install -y mssql-tools18
-RUN echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
-RUN source ~/.bashrc
+ENV PATH="$PATH:/opt/mssql-tools18/bin"
 
 # Install unixODBC development headers
 RUN apt-get install -y unixodbc-dev
