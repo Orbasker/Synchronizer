@@ -94,12 +94,10 @@ class AzureDbConnection:
     def connect(self):
         self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
         self.conn = self.engine.connect()
-        self.metadata = MetaData()
+        self.metadata = MetaData(bind=self.engine)
         self.tbl_fixtures = Table(
             "tbl_fixtures",
             self.metadata,
-            autoload=True,
-            autoload_with=self.engine,
         )
 
     def disconnect(self):
@@ -118,16 +116,24 @@ class AzureDbConnection:
 
     def insert_fixture(self, fixture: Fixture):
         fixture_dict = fixture.to_dict()
-        query = self.tbl_fixtures.insert().values(**fixture_dict).returning(self.tbl_fixtures.columns.id)
-        result = self.conn.execute(query)
-        return result.scalar()
+        try:
+            query = self.tbl_fixtures.insert().values(**fixture_dict).returning(self.tbl_fixtures.columns.id)
+            result = self.conn.execute(query)
+            return result.scalar()
+        except Exception as e:
+            print(e)
+            return None
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
-        if fixture_id is None:
-            query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.name == fixture_name)
-        else:
-            query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.id == fixture_id)
-        return self.conn.execute(query)
+        try:
+            if fixture_id is None:
+                query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.name == fixture_name)
+            else:
+                query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.id == fixture_id)
+            return self.conn.execute(query)
+        except Exception as e:
+            print(e)
+            return None
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
         fixture_dict = fixture.to_dict()
@@ -140,10 +146,14 @@ class AzureDbConnection:
         return self.conn.execute(query)
 
     def fixture_exists(self, fixture_name) -> bool:
-        query = self.tbl_fixtures.select().where(self.tbl_fixtures.columns.name == fixture_name)
-        output = self.conn.execute(query)
-        results = output.fetchall()
-        return len(results) != 0
+        try:
+            query = self.tbl_fixtures.select().where(self.tbl_fixtures.columns.name == fixture_name)
+            output = self.conn.execute(query)
+            results = output.fetchall()
+            return len(results) != 0
+        except Exception as e:
+            print(e)
+            return False
 
 
 if __name__ == "__main__":

@@ -131,12 +131,15 @@ async def new_item(request: Request):
                 longitude=coordinates.long,
                 id_gateway=14,
             )
-            if db_conn.fixture_exists(sn_nema):
-                fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
-            else:
-                fixture_id_res = db_conn.insert_fixture(new_fixture)
+            try:
+                if db_conn.fixture_exists(sn_nema):
+                    fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
+                else:
+                    fixture_id_res = db_conn.insert_fixture(new_fixture)
+            except Exception as e:
+                print(e)
             db_conn.delete_fixture(fixture_name=old_sn)
-            response_data = {
+            return {
                 "LMS result": "Item added to LMS",
                 "id": fixture_id_res,
                 "Monday message": "Item added to Monday.com",
@@ -144,9 +147,6 @@ async def new_item(request: Request):
                 "delete old fixture": "fixture deleted successfully",
                 "fixture_id": old_sn,
             }
-
-            return response_data
-
         except Exception as e:
             print(e)
         finally:
