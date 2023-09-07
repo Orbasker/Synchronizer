@@ -18,9 +18,11 @@ app.include_router(giscloud.router)
 async def startup_event():
     load_dotenv()
 
-@app.get("/",include_in_schema=False)
+
+@app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/docs")
+
 
 if __name__ == "__main__":
     uvicorn.run(

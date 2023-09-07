@@ -1,16 +1,16 @@
-import os
 import json
+import os
 from datetime import datetime
+
 # from typing import Annotated,Dict
 from urllib.request import Request
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import load_lms_token
+from handlers.jsc_hanler import AzureDbConnection, ConnectionSettings, Fixture
 from handlers.lms_requests import DeviceData, LMSRequest
 from handlers.monday_handler import Coordinates, Item, MondayClient
-from handlers.jsc_hanler import AzureDbConnection, ConnectionSettings, Fixture
-
 
 router = APIRouter()
 lms_base_url = os.getenv("LMS_API_BASEURL")
@@ -23,6 +23,8 @@ conn_settings = ConnectionSettings(
 )
 db_conn = AzureDbConnection(conn_settings)
 db_conn.connect()
+
+
 @router.post("/fixture")
 async def update_lms(request):
     try:
@@ -44,6 +46,7 @@ async def update_lms(request):
         return {"session_site": session_site, "new_sn": new_sn, "old_sn": old_sn_res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/sites")
 def get_sites():
