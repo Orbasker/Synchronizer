@@ -9,8 +9,8 @@ COPY requirements.txt requirements.txt
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-# Install Microsoft ODBC driver dependencies
-RUN apt-get update && apt-get install -y curl apt-transport-https lsb-release
+# Install Microsoft ODBC driver dependencies and GnuPG
+RUN apt-get update && apt-get install -y curl apt-transport-https lsb-release gnupg
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | tee /etc/apt/sources.list.d/mssql-release.list
 RUN apt-get update
