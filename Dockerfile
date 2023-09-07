@@ -10,8 +10,11 @@ RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
 RUN apt-get update && apt-get install -y unixodbc-dev
 
-COPY . .
 COPY ./odbc-driver-18 /opt/microsoft/msodbcsql18
+
 ENV PATH=$PATH:/opt/microsoft/msodbcsql18/bin
+
+
+COPY . .
 
 CMD ["python3", "-m" , "server"]
