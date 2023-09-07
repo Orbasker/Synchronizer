@@ -94,7 +94,7 @@ class AzureDbConnection:
     def connect(self):
         self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
         self.conn = self.engine.connect()
-        self.metadata = MetaData(bind=self.engine)
+        self.metadata = MetaData()
         self.tbl_fixtures = Table(
             "tbl_fixtures",
             self.metadata,
