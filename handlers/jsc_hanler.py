@@ -78,7 +78,6 @@ class AzureDbConnection:
         self.echo = echo
         self.conn_string = self._construct_connection_string()
         self.connect()
-        
 
     def _construct_connection_string(self) -> str:
         conn_params = urllib.parse.quote_plus(
@@ -106,10 +105,7 @@ class AzureDbConnection:
             Column("latitude", Float),
             Column("longitude", Float),
             Column("id_gateway", Integer),
-            
-            
         )
-        
 
     def disconnect(self):
         self.conn.close()
@@ -168,4 +164,4 @@ class AzureDbConnection:
 
 
 # if __name__ == "__main__":
-    # print(get_getway_id(34.791, 32.085))
+# print(get_getway_id(34.791, 32.085))
