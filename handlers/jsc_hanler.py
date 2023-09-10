@@ -1,6 +1,7 @@
 import json
 import os
 import urllib
+import logging
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -20,6 +21,13 @@ from sqlalchemy import (
 
 # Load your polygon data, replace 'your_polygon_data.shp' with your file
 gdf = gpd.read_file("Jnet_0_gws.shp")
+
+logging.basicConfig(
+    level=logging.INFO,  # Set the desired logging level (INFO, DEBUG, WARNING, ERROR, etc.)
+    filename='app.log',  # Specify the log file name
+    format='%(asctime)s [%(levelname)s]: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 from shapely.geometry import Point, Polygon
 
@@ -126,9 +134,10 @@ class AzureDbConnection:
         try:
             query = self.tbl_fixtures.insert().values(**fixture_dict).returning(self.tbl_fixtures.columns.id)
             result = self.conn.execute(query)
+            logging.info(f"Fixture {fixture.name} was added successfully")
             return result.scalar()
         except Exception as e:
-            print(e)
+            logging.error(f"An error occured: {str(e)}", exc_info=True)
             return None
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
@@ -137,9 +146,10 @@ class AzureDbConnection:
                 query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.name == fixture_name)
             else:
                 query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.id == fixture_id)
+            logging.info(f"Fixture {fixture_name} was deleted successfully")
             return self.conn.execute(query)
         except Exception as e:
-            print(e)
+            logging.error(f"An error occured: {str(e)}", exc_info=True)
             return None
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
@@ -159,7 +169,7 @@ class AzureDbConnection:
             results = output.fetchall()
             return len(results) != 0
         except Exception as e:
-            print(e)
+            logging.warning(f"Didnt find SN: {str(e)}", exc_info=True)
             return False
 
 
