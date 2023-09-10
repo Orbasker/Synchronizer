@@ -1,7 +1,7 @@
 import json
+import logging
 import os
 import urllib
-import logging
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -24,9 +24,9 @@ gdf = gpd.read_file("Jnet_0_gws.shp")
 
 logging.basicConfig(
     level=logging.INFO,  # Set the desired logging level (INFO, DEBUG, WARNING, ERROR, etc.)
-    filename='app.log',  # Specify the log file name
-    format='%(asctime)s [%(levelname)s]: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    filename="app.log",  # Specify the log file name
+    format="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 from shapely.geometry import Point, Polygon
