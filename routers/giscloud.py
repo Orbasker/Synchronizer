@@ -89,6 +89,7 @@ def get_site(site_id: str):
 
 @router.post("/giscloud")
 async def new_item(request: Request):
+    db_conn.connect()
     try:
         # request_dict = await  json.loads(request.body)
         # db_conn.connect()
