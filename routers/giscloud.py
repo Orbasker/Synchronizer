@@ -85,12 +85,15 @@ def get_site(site_id: str):
 async def new_item(request: Request):
     try:
         # request_dict = await  json.loads(request.body)
+        # db_conn.connect()
         item_data_request = await request.json()
         item_data = item_data_request.get("data")
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
         sn_nema = item_data.get("sn_nema")
-        insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%d %H:%M:%S")
+        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%d %H:%M:%S")
+        insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
+
         coordinates = Coordinates(
             long=float(item_data.get("longitude")),
             lat=float(item_data.get("latitude")),

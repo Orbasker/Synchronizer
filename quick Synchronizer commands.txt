@@ -1,0 +1,5 @@
+docker pull orbasker/synchronizer
+
+docker run -p 80:80 orbasker/synchronizer
+
+python -m pre_commit run --all-files
