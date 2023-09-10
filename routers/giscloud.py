@@ -8,7 +8,12 @@ from urllib.request import Request
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import load_lms_token
-from handlers.jsc_hanler import AzureDbConnection, ConnectionSettings, Fixture
+from handlers.jsc_hanler import (
+    AzureDbConnection,
+    ConnectionSettings,
+    Fixture,
+    log_message,
+)
 from handlers.lms_requests import DeviceData, LMSRequest
 from handlers.monday_handler import Coordinates, Item, MondayClient
 
@@ -138,10 +143,14 @@ async def new_item(request: Request):
             try:
                 if db_conn.fixture_exists(sn_nema):
                     fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
+                    log_message(f"Fixture {sn_nema} updated successfully", log_level="INFO")
                 else:
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
+                    log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
             except Exception as e:
+                log_message(f"Failed to insert fixture {sn_nema} to DB: {e}", log_level="ERROR")
                 print(e)
+
             db_conn.delete_fixture(fixture_name=old_sn)
             return {
                 "LMS result": "Item added to LMS",
