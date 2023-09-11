@@ -18,7 +18,6 @@ from sqlalchemy import (
     Table,
     create_engine,
     inspect,
-    
 )
 from sqlalchemy.orm import Session
 
@@ -92,10 +91,9 @@ class AzureDbConnection:
         self.metadata = MetaData(schema="dbo")
         self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
         self.conn = self.engine.connect()
-        self.tbl_fixtures = Table('tbl_fixtures', self.metadata, autoload_with=self.conn)
+        self.tbl_fixtures = Table("tbl_fixtures", self.metadata, autoload_with=self.conn)
         self.session = Session(self.engine)
         # self.conn.begin()
-        
 
     def _construct_connection_string(self) -> str:
         conn_params = urllib.parse.quote_plus(
@@ -111,18 +109,16 @@ class AzureDbConnection:
         return f"mssql+pyodbc:///?odbc_connect={conn_params}"
 
     # def connect(self):
-        
-       
-        
-        # self.metadata = MetaData(schema="dbo.tbl_fixtures")
-        # self.metadata.create_all(self.engine)
-        # self.metadata.bind = self.engine
-        # # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
-        # self.tbl_fixtures = Table(
-        #     "tbl_fixtures",
-        #     self.metadata,
-        # )
-        # self.session = Session(self.engine)
+
+    # self.metadata = MetaData(schema="dbo.tbl_fixtures")
+    # self.metadata.create_all(self.engine)
+    # self.metadata.bind = self.engine
+    # # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
+    # self.tbl_fixtures = Table(
+    #     "tbl_fixtures",
+    #     self.metadata,
+    # )
+    # self.session = Session(self.engine)
 
     def disconnect(self):
         self.conn.close()
