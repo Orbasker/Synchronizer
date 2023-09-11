@@ -18,7 +18,9 @@ from sqlalchemy import (
     Table,
     create_engine,
     inspect,
+    
 )
+from sqlalchemy.orm import Session
 
 # Load your polygon data, replace 'your_polygon_data.shp' with your file
 gdf = gpd.read_file("Jnet_0_gws.shp")
@@ -87,7 +89,13 @@ class AzureDbConnection:
         self.conn_settings = conn_settings
         self.echo = echo
         self.conn_string = self._construct_connection_string()
-        self.connect()
+        self.metadata = MetaData(schema="dbo")
+        self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
+        self.conn = self.engine.connect()
+        self.tbl_fixtures = Table('tbl_fixtures', self.metadata, autoload_with=self.conn)
+        self.session = Session(self.engine)
+        # self.conn.begin()
+        
 
     def _construct_connection_string(self) -> str:
         conn_params = urllib.parse.quote_plus(
@@ -102,20 +110,19 @@ class AzureDbConnection:
         )
         return f"mssql+pyodbc:///?odbc_connect={conn_params}"
 
-    def connect(self):
-        self.engine = create_engine(self.conn_string, echo=self.echo, fast_executemany=True)
-        self.conn = self.engine.connect()
-        self.metadata = MetaData()
-        # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
-        self.tbl_fixtures = Table(
-            "tbl_fixtures",
-            self.metadata,
-            Column("id", Integer, primary_key=True),
-            Column("name", String(50)),
-            Column("latitude", Float),
-            Column("longitude", Float),
-            Column("id_gateway", Integer),
-        )
+    # def connect(self):
+        
+       
+        
+        # self.metadata = MetaData(schema="dbo.tbl_fixtures")
+        # self.metadata.create_all(self.engine)
+        # self.metadata.bind = self.engine
+        # # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
+        # self.tbl_fixtures = Table(
+        #     "tbl_fixtures",
+        #     self.metadata,
+        # )
+        # self.session = Session(self.engine)
 
     def disconnect(self):
         self.conn.close()

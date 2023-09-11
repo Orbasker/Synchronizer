@@ -27,7 +27,7 @@ conn_settings = ConnectionSettings(
     password=os.getenv("DB_PASSWORD"),
 )
 db_conn = AzureDbConnection(conn_settings)
-db_conn.connect()
+# db_conn.connect()
 
 
 @router.post("/fixture")
@@ -48,7 +48,6 @@ async def update_lms(request):
         new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
         old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
         # result = db_conn.delete_fixture(fixture_name=old_sn)
-
         return {"session_site": session_site, "new_sn": new_sn, "old_sn": old_sn_res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -89,7 +88,7 @@ def get_site(site_id: str):
 
 @router.post("/giscloud")
 async def new_item(request: Request):
-    db_conn.connect()
+    # db_conn.connect()
     try:
         # request_dict = await  json.loads(request.body)
         # db_conn.connect()
@@ -153,6 +152,7 @@ async def new_item(request: Request):
                 print(e)
 
             db_conn.delete_fixture(fixture_name=old_sn)
+            db_conn.conn.commit()
             return {
                 "LMS result": "Item added to LMS",
                 "id": fixture_id_res,
@@ -162,6 +162,7 @@ async def new_item(request: Request):
                 "fixture_id": old_sn,
             }
         except Exception as e:
+            db_conn.conn.rollback()
             print(e)
         finally:
             db_conn.disconnect()
