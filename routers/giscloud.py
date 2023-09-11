@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 
 # from typing import Annotated,Dict
@@ -26,7 +27,6 @@ conn_settings = ConnectionSettings(
     username=os.getenv("DB_USER"),
     password=os.getenv("DB_PASSWORD"),
 )
-db_conn = AzureDbConnection(conn_settings)
 # db_conn.connect()
 
 
@@ -97,6 +97,8 @@ async def new_item(request: Request):
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
         sn_nema = item_data.get("sn_nema")
+        sn_nema = get_regex_result(sn_nema)
+        sn_type = define_barcode_type(sn_nema)
         # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%d %H:%M:%S")
         insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
 
@@ -108,6 +110,7 @@ async def new_item(request: Request):
         picture_raw_data = item_data.get("raw_image")
         notes = item_data.get("note")
         old_sn = item_data.get("old_sn")
+        old_sn = get_regex_result(old_sn)
         type_switch = item_data.get("type_switches")
         lamp_type = item_data.get("lamp_type")
         reason = item_data.get("svg")
@@ -132,13 +135,35 @@ async def new_item(request: Request):
             group_id=group_id,
             item=new_item,
         )
+        if sn_type == "Jnet1":
+            new_fixture = DeviceData(
+                pole=sn_nema, serial_number=sn_nema, latitude=coordinates.lat, longitude=coordinates.long, id_gateway=14
+            )
+            try:
+                session_site = lms_request.session("Or Yehuda - Israel")
+                new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
+                old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
+                return {
+                    "LMS result": "Item added to LMS",
+                    "new_sn": new_sn,
+                    "old_sn": old_sn_res,
+                    "Monday message": "Item added to Monday.com",
+                    "item_id": item_id,
+                    "delete old fixture": "fixture deleted successfully",
+                    "fixture_sn": old_sn,
+                }
 
-        try:
+            except Exception as e:
+                log_message(f"Failed to insert fixture {sn_nema} to LMS: {e}", log_level="ERROR")
+                raise HTTPException(status_code=500, detail=str(e)) from e
+        elif sn_type == "Jnet0":
+            db_conn = AzureDbConnection(conn_settings)
             new_fixture = Fixture(
                 name=sn_nema,
                 latitude=coordinates.lat,
                 longitude=coordinates.long,
                 id_gateway=14,
+                # gateway_id should be desided based on location using polygons layer
             )
             try:
                 if db_conn.fixture_exists(sn_nema):
@@ -148,24 +173,49 @@ async def new_item(request: Request):
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
                     log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
             except Exception as e:
+                db_conn.conn.rollback()
+
                 log_message(f"Failed to insert fixture {sn_nema} to DB: {e}", log_level="ERROR")
                 print(e)
 
             db_conn.delete_fixture(fixture_name=old_sn)
+
             db_conn.conn.commit()
+            db_conn.disconnect()
             return {
                 "LMS result": "Item added to LMS",
                 "id": fixture_id_res,
                 "Monday message": "Item added to Monday.com",
                 "item_id": item_id,
                 "delete old fixture": "fixture deleted successfully",
-                "fixture_id": old_sn,
+                "fixture_sn": old_sn,
             }
-        except Exception as e:
-            db_conn.conn.rollback()
-            print(e)
-        finally:
-            db_conn.disconnect()
+        else:
+            return {
+                "LMS result": "Item not added to LMS",
+                "Monday message": "Item added to Monday.com",
+                "item id": item_id,
+                "delete old fixture": "fixture not been deleted",
+                "old fixture sn": old_sn,
+            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+    finally:
+        log_message("End of webhook work from giscloud", log_level="INFO")
+
+
+def get_regex_result(barcode: str) -> str:
+    if barcode is not None:
+        regex_result = re.search(r"([1-9][0-9]*\d{6,8})", barcode)
+        return regex_result.group() if regex_result else barcode
+    return barcode
+
+
+def define_barcode_type(regex_result: str) -> str:
+    if regex_result and regex_result.startswith("103"):
+        return "Jnet1"
+    elif regex_result and regex_result[:3] in ["402", "750", "220", "470", "200"]:
+        return "Jnet0"
+    else:
+        return "Unknown"
