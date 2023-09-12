@@ -47,11 +47,12 @@ load_dotenv()
 
 
 class Fixture:
-    def __init__(self, name, latitude, longitude, id_gateway=None, **kwargs):
+    def __init__(self, name, latitude, longitude, id_gateway=None, ident=None, **kwargs):
         self.name = name
         self.latitude = latitude
         self.longitude = longitude
         self.id_gateway = id_gateway
+        self.ident = ident
         # self.__dict__.update(kwargs)
 
     def to_dict(self):
@@ -59,7 +60,8 @@ class Fixture:
             "name": self.name,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "id_gateway": self.id_gateway
+            "id_gateway": self.id_gateway,
+            "ident": self.ident
             # Add other properties here if needed
         }
 

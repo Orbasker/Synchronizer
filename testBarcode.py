@@ -1,5 +1,8 @@
 import re
+
 import pandas as pd
+
+
 def get_regex_result(barcode: str) -> str:
     if barcode is not None:
         regex_result = re.search(r"([1-9][0-9]*\d{6,8})", barcode)

@@ -9,6 +9,7 @@ from urllib.request import Request
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import load_lms_token
+from handlers import polygon_handler
 from handlers.jsc_hanler import (
     AzureDbConnection,
     ConnectionSettings,
@@ -90,9 +91,12 @@ def get_site(site_id: str):
 async def new_item(request: Request):
     # db_conn.connect()
     try:
+
         # request_dict = await  json.loads(request.body)
         # db_conn.connect()
         item_data_request = await request.json()
+        log_message("New webhook request from giscloud", log_level="INFO")
+        log_message(f"item_data_request: {item_data_request}", log_level="INFO")
         item_data = item_data_request.get("data")
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
@@ -143,6 +147,8 @@ async def new_item(request: Request):
                 session_site = lms_request.session("Or Yehuda - Israel")
                 new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
                 old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
+                log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
+                log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
                 return {
                     "LMS result": "Item added to LMS",
                     "new_sn": new_sn,
@@ -155,6 +161,7 @@ async def new_item(request: Request):
 
             except Exception as e:
                 log_message(f"Failed to insert fixture {sn_nema} to LMS: {e}", log_level="ERROR")
+                log_message(f"fixture info: {new_fixture.to_json()}", log_level="INFO")
                 raise HTTPException(status_code=500, detail=str(e)) from e
         elif sn_type == "Jnet0":
             db_conn = AzureDbConnection(conn_settings)
@@ -162,7 +169,8 @@ async def new_item(request: Request):
                 name=sn_nema,
                 latitude=coordinates.lat,
                 longitude=coordinates.long,
-                id_gateway=14,
+                id_gateway=19,
+                ident=polygon_handler.get_getway_id(lon=coordinates.long, lat=coordinates.lat)
                 # gateway_id should be desided based on location using polygons layer
             )
             try:
@@ -172,6 +180,7 @@ async def new_item(request: Request):
                 else:
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
                     log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
+                log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
             except Exception as e:
                 db_conn.conn.rollback()
 
@@ -191,6 +200,7 @@ async def new_item(request: Request):
                 "fixture_sn": old_sn,
             }
         else:
+            log_message(f"Fixture {sn_nema} is not a Jnet fixture", log_level="Warning")
             return {
                 "LMS result": "Item not added to LMS",
                 "Monday message": "Item added to Monday.com",
@@ -200,6 +210,7 @@ async def new_item(request: Request):
             }
 
     except Exception as e:
+        log_message(f"An error occured: {str(e)}", log_level="ERROR")
         raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         log_message("End of webhook work from giscloud", log_level="INFO")
