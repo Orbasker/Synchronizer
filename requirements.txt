@@ -12,3 +12,4 @@ sql
 geopandas
 shapely
 pandas
+python-dateutil

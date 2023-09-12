@@ -6,6 +6,7 @@ from datetime import datetime
 # from typing import Annotated,Dict
 from urllib.request import Request
 
+from dateutil import parser
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import load_lms_token
@@ -104,7 +105,10 @@ async def new_item(request: Request):
         sn_nema = get_regex_result(sn_nema)
         sn_type = define_barcode_type(sn_nema)
         # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%d %H:%M:%S")
-        insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
+        date_str = item_data.get("date")
+        insertion_date = parser.isoparse(date_str)
+        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
+        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
 
         coordinates = Coordinates(
             long=float(item_data.get("longitude")),
