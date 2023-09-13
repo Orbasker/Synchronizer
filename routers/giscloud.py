@@ -151,7 +151,7 @@ async def new_item(request: Request):
             group_id=group_id,
             item=new_item,
         )
-        monday_handler.add_item_picture(item_id=item_id, picture=picture_raw_data)
+        monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
         if sn_type == "Jnet1":
             new_fixture = DeviceData(
                 pole=sn_nema, serial_number=sn_nema, latitude=coordinates.lat, longitude=coordinates.long, id_gateway=14
