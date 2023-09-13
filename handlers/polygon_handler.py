@@ -21,4 +21,4 @@ def get_getway_id(lon, lat) -> str:
 
 
 # Print the polygon id
-print(get_getway_id(lon=34.872224, lat=32.027169))
+# print(get_getway_id(lon=34.872224, lat=32.027169))

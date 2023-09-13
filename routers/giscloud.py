@@ -24,7 +24,7 @@ from handlers.monday_handler import Coordinates, Item, MondayClient
 router = APIRouter()
 lms_base_url = os.getenv("LMS_API_BASEURL")
 lms_request = LMSRequest(lms_base_url)
-gis_handler = GisCloudHandler(os.getenv("GISCLOUD_API_KEY"))
+gis_handler = GisCloudHandler(os.getenv("GIS_CLOUD_API_KEY"))
 conn_settings = ConnectionSettings(
     server=os.getenv("DB_HOST"),
     database=os.getenv("DB_NAME"),
@@ -101,7 +101,7 @@ async def new_item(request: Request):
         log_message("New webhook request from giscloud", log_level="INFO")
         log_message(f"item_data_request: {item_data_request}", log_level="INFO")
         item_data = item_data_request.get("data")
-        gis_feature_id = item_data_request.get("ogc_fid")
+        gis_feature_id = item_data.get("ogc_fid")
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
         sn_nema = item_data.get("sn_nema")
@@ -128,7 +128,7 @@ async def new_item(request: Request):
         # Create an Item object based on the extracted data
         # take picture raw data from giscloud and send it to monday
         # picture_raw_data= mond
-        layer_id = os.getenv("GISCLOUD_LAYER_ID")
+        layer_id = os.getenv("GIS_CLOUD_LAYER_ID")
         picture_raw_data = gis_handler.get_picture(layer_id=layer_id, feature_id=gis_feature_id, file_name=picture)
 
         new_item = Item(
