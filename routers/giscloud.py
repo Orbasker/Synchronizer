@@ -24,6 +24,7 @@ from handlers.monday_handler import Coordinates, Item, MondayClient
 router = APIRouter()
 lms_base_url = os.getenv("LMS_API_BASEURL")
 lms_request = LMSRequest(lms_base_url)
+gis_handler = GisCloudHandler(os.getenv("GISCLOUD_API_KEY"))
 conn_settings = ConnectionSettings(
     server=os.getenv("DB_HOST"),
     database=os.getenv("DB_NAME"),
@@ -128,7 +129,7 @@ async def new_item(request: Request):
         # take picture raw data from giscloud and send it to monday
         # picture_raw_data= mond
         layer_id = os.getenv("GISCLOUD_LAYER_ID")
-        picture_raw_data = GisCloudHandler.get_picture(layer_id=layer_id, feature_id=gis_feature_id, file_name=picture)
+        picture_raw_data = gis_handler.get_picture(layer_id=layer_id, feature_id=gis_feature_id, file_name=picture)
 
         new_item = Item(
             sn_nema=sn_nema,
