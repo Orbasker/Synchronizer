@@ -123,6 +123,7 @@ async def new_item(request: Request):
         lamp_type = item_data.get("lamp_type")
         reason = item_data.get("svg")
         # Create an Item object based on the extracted data
+        # take picture raw data from giscloud and send it to monday
         new_item = Item(
             sn_nema=sn_nema,
             insertion_date=insertion_date,
@@ -150,9 +151,23 @@ async def new_item(request: Request):
             try:
                 session_site = lms_request.session("Or Yehuda - Israel")
                 new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
-                old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
-                log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
+                if new_sn == "duplicate entry, you can not insert records that already exist":
+                    new_sn = lms_request.update_device(
+                        group_id=259, device_data=new_fixture.to_json(), serial_number=new_fixture.get_serial_number()
+                    )
+                    log_message(f"Fixture {sn_nema} updated successfully to LMS", log_level="INFO")
+                else:
+                    log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
+                # Only if sn_nema is not None
+                if old_sn is not None:
+                    try:
+                        old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
+                        log_message(f"Fixture {old_sn} deleted successfully from LMS", log_level="INFO")
+                    except Exception as e:
+                        log_message(f"Failed to delete fixture {old_sn} from LMS: {e}", log_level="ERROR")
+                        raise HTTPException(status_code=500, detail=str(e)) from e
+                # lms_request.update_device
                 return {
                     "LMS result": "Item added to LMS",
                     "new_sn": new_sn,
@@ -177,27 +192,47 @@ async def new_item(request: Request):
                 ident=polygon_handler.get_getway_id(lon=coordinates.long, lat=coordinates.lat)
                 # gateway_id should be desided based on location using polygons layer
             )
+            new_device = DeviceData(
+                serial_number=sn_nema,
+                pole=sn_nema,
+                latitude=coordinates.lat,
+                longitude=coordinates.long,
+                id_gateway=19,
+            )
             try:
                 if db_conn.fixture_exists(sn_nema):
                     fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
+                    device_res = lms_request.update_device(
+                        group_id=259, device_data=new_device.to_json(), serial_number=new_device.get_serial_number()
+                    )
                     log_message(f"Fixture {sn_nema} updated successfully", log_level="INFO")
+                    log_message(f"Device {sn_nema} updated successfully: result = {device_res}", log_level="INFO")
+
                 else:
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
+                    device_res = lms_request.create_device(group_id=259, device_data=new_device.to_json())
                     log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
+                    log_message(f"Device {sn_nema} inserted successfully: result = {device_res}", log_level="INFO")
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
             except Exception as e:
                 db_conn.conn.rollback()
 
                 log_message(f"Failed to insert fixture {sn_nema} to DB: {e}", log_level="ERROR")
                 print(e)
-
-            db_conn.delete_fixture(fixture_name=old_sn)
+            if old_sn is not None:
+                try:
+                    lms_request.delete_device(group_id=259, serial_number=old_sn)
+                    db_conn.delete_fixture(fixture_name=old_sn)
+                except Exception as e:
+                    log_message(f"Failed to delete fixture {old_sn} from LMS or azure DB", log_level="ERROR")
+                    raise HTTPException(status_code=500, detail=str(e)) from e
 
             db_conn.conn.commit()
             db_conn.disconnect()
             return {
-                "LMS result": "Item added to LMS",
-                "id": fixture_id_res,
+                "Message": "Item added to LMS and Azure DB",
+                "LMS result": lms_request,
+                "JSC result": fixture_id_res,
                 "Monday message": "Item added to Monday.com",
                 "item_id": item_id,
                 "delete old fixture": "fixture deleted successfully",
