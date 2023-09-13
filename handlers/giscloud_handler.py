@@ -11,6 +11,17 @@ class GisCloudHandler:
         self._images_base_api_url = "https://editor.giscloud.com/"
         self.api_key = api_key
 
+    def get_picture(self, layer_id, feature_id, file_name):
+        get_picture_data_url = urljoin(
+            self._images_base_api_url, f"/rest/1/layers/{layer_id}/features/{feature_id}/picture/{file_name}"
+        )
+        return requests.get(
+            url=get_picture_data_url,
+            params={
+                "api_key": self.api_key,
+            },
+        )._content
+
     def get_sn_picture_data(self, item: dict, layer_id, feature_id):
         file_name = item["data"]["picture"]
         get_picture_data_url = urljoin(

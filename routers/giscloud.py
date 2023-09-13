@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from dependencies import load_lms_token
 from handlers import polygon_handler
+from handlers.giscloud_handler import GisCloudHandler
 from handlers.jsc_hanler import (
     AzureDbConnection,
     ConnectionSettings,
@@ -99,6 +100,7 @@ async def new_item(request: Request):
         log_message("New webhook request from giscloud", log_level="INFO")
         log_message(f"item_data_request: {item_data_request}", log_level="INFO")
         item_data = item_data_request.get("data")
+        gis_feature_id = item_data_request.get("ogc_fid")
         # Extract relevant data from the incoming request payload
         monday_handler = MondayClient(os.getenv("MONDAY_API_KEY"))
         sn_nema = item_data.get("sn_nema")
@@ -124,6 +126,10 @@ async def new_item(request: Request):
         reason = item_data.get("svg")
         # Create an Item object based on the extracted data
         # take picture raw data from giscloud and send it to monday
+        # picture_raw_data= mond
+        layer_id = os.getenv("GISCLOUD_LAYER_ID")
+        picture_raw_data = GisCloudHandler.get_picture(layer_id=layer_id, feature_id=gis_feature_id, file_name=picture)
+
         new_item = Item(
             sn_nema=sn_nema,
             insertion_date=insertion_date,
