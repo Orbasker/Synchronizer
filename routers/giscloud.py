@@ -293,12 +293,12 @@ async def new_item(request: Request):
     finally:
         log_message("End of webhook work from giscloud", log_level="INFO")
         result["Monday message"] = "Item added to Monday.com"
-        result["item_id"] = item_id
         item_id = monday_handler.add_item(
             board_id=board_id,
             group_id=group_id,
             item=new_item,
         )
+        result["item_id"] = item_id
         monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
 
         return result
