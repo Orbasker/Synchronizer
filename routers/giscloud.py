@@ -168,6 +168,7 @@ async def new_item(request: Request):
                     log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
                 # Only if sn_nema is not None
+                old_sn_res = None
                 if old_sn is not None:
                     try:
                         old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
