@@ -39,19 +39,27 @@ def main():
     df.to_csv(output_file, index=False)
 
 
-lms_base_url = os.getenv("LMS_API_BASEURL")
-lms = LMSRequest(lms_base_url)
-session_site = lms.session("Or Yehuda - Israel")
-new_fixture = DeviceData(
-    pole="10343301", serial_number="10343301", latitude=32.023614316863, longitude=34.866840175677, id_gateway=14
-)
-new_sn = lms.create_device(group_id=259, device_data=new_fixture.to_json())
-if new_sn == "duplicate entry, you can not insert records that already exist":
-    new_sn = lms.update_device(
-        group_id=259, device_data=new_fixture.to_json(), serial_number=new_fixture.get_serial_number()
-    )
-pass
+import datetime
 
+from handlers.monday_handler import Coordinates, Item, MondayClient
+
+monday = MondayClient(api_key=os.environ["MONDAY_API_KEY"])
+cordinate = Coordinates(long=34.872224, lat=32.027169)
+new_item = Item(
+    sn_nema="1232323",
+    insertion_date=datetime.datetime.now(),
+    coordinates=cordinate,
+    picture="picture",
+    notes="notes",
+    old_sn="old_sn",
+    type_switch="type_switch",
+    lamp_type="lamp_type",
+    reason="reason",
+    webhook_response="webhook_response",
+)
+
+
+monday.add_item(board_id=os.environ["MONDAY_BOARD_ID"], group_id=os.environ["MONDAY_GROUP_ID"], item=new_item)
 
 # if __name__ == "__main__":
 # main()

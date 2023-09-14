@@ -24,6 +24,7 @@ class Item:
         type_switch: str = None,
         item_id: str = None,
         reason: str = None,
+        webhook_response: dict = None,
     ) -> None:
         self.sn = sn_nema
         self.date = insertion_date
@@ -36,6 +37,7 @@ class Item:
         self.type_switch = type_switch
         self.item_id = item_id
         self.reason = reason
+        self.webhook_response = webhook_response
 
 
 class MondayClient:
@@ -73,7 +75,7 @@ class MondayClient:
                 group_id: "{group_id}",
                 item_name: "{item.sn}",
                 create_labels_if_missing: true,
-                column_values: "{{\\"text4\\": \\"{item.notes}\\", \\"location\\": {{\\"lat\\": \\"{item.address.lat}\\", \\"lng\\":\\"{item.address.long}\\", \\"address\\":\\"{item.sn}\\"}}, \\"date4\\": {{\\"date\\": \\"{formatted_date}\\"}}, \\"text7\\": \\"{item.old_sn}\\", \\"label3\\": {{\\"label\\": \\"{formatted_status}\\"}}, \\"status_1\\": {{\\"label\\": \\"{formatted_type_switch}\\"}}}}"
+                column_values: "{{\\"text4\\": \\"{item.notes}\\", \\"location\\": {{\\"lat\\": \\"{item.address.lat}\\", \\"lng\\":\\"{item.address.long}\\", \\"address\\":\\"{item.sn}\\"}}, \\"date4\\": {{\\"date\\": \\"{formatted_date}\\"}}, \\"text7\\": \\"{item.old_sn}\\", \\"label3\\": {{\\"label\\": \\"{formatted_status}\\"}}, \\"status_1\\": {{\\"label\\": \\"{formatted_type_switch}\\"}}, \\"long_text\\": \\"{item.webhook_response}\\"}}"
             ) 
             {{
                 id

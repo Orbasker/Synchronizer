@@ -93,6 +93,7 @@ def get_site(site_id: str):
 @router.post("/giscloud")
 async def new_item(request: Request):
     # db_conn.connect()
+    result = {}
     try:
 
         # request_dict = await  json.loads(request.body)
@@ -142,16 +143,12 @@ async def new_item(request: Request):
             type_switch=type_switch,
             lamp_type=lamp_type,
             reason=reason,
+            webhook_response=result,
         )
         # Add the new item to Monday.com
         board_id = int(os.getenv("MONDAY_BOARD_ID"))
         group_id = os.getenv("MONDAY_GROUP_ID")
-        item_id = monday_handler.add_item(
-            board_id=board_id,
-            group_id=group_id,
-            item=new_item,
-        )
-        monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
+
         if sn_type == "Jnet1":
             new_fixture = DeviceData(
                 pole=sn_nema, serial_number=sn_nema, latitude=coordinates.lat, longitude=coordinates.long, id_gateway=14
@@ -164,8 +161,11 @@ async def new_item(request: Request):
                         group_id=259, device_data=new_fixture.to_json(), serial_number=new_fixture.get_serial_number()
                     )
                     log_message(f"Fixture {sn_nema} updated successfully to LMS", log_level="INFO")
+                    result["LMS result"] = f"{sn_nema} updated to LMS"
                 else:
                     log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
+                    result["LMS result"] = f"{sn_nema} inserted to LMS"
+                result["fixture_info"] = new_fixture.to_json()
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
                 # Only if sn_nema is not None
                 old_sn_res = None
@@ -173,22 +173,26 @@ async def new_item(request: Request):
                     try:
                         old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
                         log_message(f"Fixture {old_sn} deleted successfully from LMS", log_level="INFO")
+                        result["delete old fixture"] = f"fixture {old_sn} deleted successfully"
                     except Exception as e:
                         log_message(f"Failed to delete fixture {old_sn} from LMS: {e}", log_level="ERROR")
+                        result["delete old fixture"] = "fixture not been deleted"
                         raise HTTPException(status_code=500, detail=str(e)) from e
                 # lms_request.update_device
-                return {
-                    "LMS result": "Item added to LMS",
-                    "new_sn": new_sn,
-                    "old_sn": old_sn_res,
-                    "Monday message": "Item added to Monday.com",
-                    "item_id": item_id,
-                    "delete old fixture": "fixture deleted successfully",
-                    "fixture_sn": old_sn,
-                }
+
+                # return {
+                #     "LMS result": "Item added to LMS",
+                #     "new_sn": new_sn,
+                #     "old_sn": old_sn_res,
+                #     "Monday message": "Item added to Monday.com",
+                #     "item_id": item_id,
+                #     "delete old fixture": "fixture deleted successfully",
+                #     "fixture_sn": old_sn,
+                # }
 
             except Exception as e:
                 log_message(f"Failed to insert fixture {sn_nema} to LMS: {e}", log_level="ERROR")
+                result["LMS result"] = f"Failed to insert fixture {sn_nema} to LMS: {e}"
                 log_message(f"fixture info: {new_fixture.to_json()}", log_level="INFO")
                 raise HTTPException(status_code=500, detail=str(e)) from e
         elif sn_type == "Jnet0":
@@ -216,52 +220,72 @@ async def new_item(request: Request):
                     )
                     log_message(f"Fixture {sn_nema} updated successfully", log_level="INFO")
                     log_message(f"Device {sn_nema} updated successfully: result = {device_res}", log_level="INFO")
+                    result["JSC result"] = f"{sn_nema} updated to JSC"
+                    result["LMS result"] = f"{sn_nema} updated to LMS, result = {device_res}"
 
                 else:
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
                     device_res = lms_request.create_device(group_id=259, device_data=new_device.to_json())
                     log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
                     log_message(f"Device {sn_nema} inserted successfully: result = {device_res}", log_level="INFO")
+                    result["JSC result"] = f"{sn_nema} inserted to JSC"
+                    result["LMS result"] = f"{sn_nema} inserted to LMS, result = {device_res}"
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
+                result["fixture_info"] = new_fixture.to_json()
             except Exception as e:
                 db_conn.conn.rollback()
 
                 log_message(f"Failed to insert fixture {sn_nema} to DB: {e}", log_level="ERROR")
+                result["JSC result"] = f"Failed to insert fixture {sn_nema} to DB: {e}"
                 print(e)
             if old_sn is not None:
                 try:
                     lms_request.delete_device(group_id=259, serial_number=old_sn)
                     db_conn.delete_fixture(fixture_name=old_sn)
+                    result["delete old fixture"] = f"fixture {old_sn} deleted successfully from JSC and LMS"
                 except Exception as e:
                     log_message(f"Failed to delete fixture {old_sn} from LMS or azure DB", log_level="ERROR")
+                    result["delete old fixture"] = f"fixture {old_sn} not been deleted. Error: {e}"
                     raise HTTPException(status_code=500, detail=str(e)) from e
 
             db_conn.conn.commit()
             db_conn.disconnect()
-            return {
-                "Message": "Item added to LMS and Azure DB",
-                "LMS result": lms_request,
-                "JSC result": fixture_id_res,
-                "Monday message": "Item added to Monday.com",
-                "item_id": item_id,
-                "delete old fixture": "fixture deleted successfully",
-                "fixture_sn": old_sn,
-            }
+            # return {
+            #     "Message": "Item added to LMS and Azure DB",
+            #     "LMS result": lms_request,
+            #     "JSC result": fixture_id_res,
+            #     "Monday message": "Item added to Monday.com",
+            #     "item_id": item_id,
+            #     "delete old fixture": "fixture deleted successfully",
+            #     "fixture_sn": old_sn,
+            # }
         else:
             log_message(f"Fixture {sn_nema} is not a Jnet fixture", log_level="Warning")
-            return {
-                "LMS result": "Item not added to LMS",
-                "Monday message": "Item added to Monday.com",
-                "item id": item_id,
-                "delete old fixture": "fixture not been deleted",
-                "old fixture sn": old_sn,
-            }
+            result["LMS result"] = f"Fixture {sn_nema} is not a Jnet fixture"
+
+            # return {
+            #     "LMS result": "Item not added to LMS",
+            #     "Monday message": "Item added to Monday.com",
+            #     "item id": item_id,
+            #     "delete old fixture": "fixture not been deleted",
+            #     "old fixture sn": old_sn,
+            # }
 
     except Exception as e:
         log_message(f"An error occured: {str(e)}", log_level="ERROR")
+        result["LMS result"] = f"An error occured: {str(e)}"
         raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         log_message("End of webhook work from giscloud", log_level="INFO")
+        item_id = monday_handler.add_item(
+            board_id=board_id,
+            group_id=group_id,
+            item=new_item,
+        )
+        monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
+        result["Monday message"] = "Item added to Monday.com"
+        result["item_id"] = item_id
+        return result
 
 
 def get_regex_result(barcode: str) -> str:
