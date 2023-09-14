@@ -165,6 +165,7 @@ async def new_item(request: Request):
                 else:
                     log_message(f"Fixture {sn_nema} inserted successfully to LMS", log_level="INFO")
                     result["LMS result"] = f"{sn_nema} inserted to LMS"
+                result["new_sn"] = new_sn
                 result["fixture_info"] = new_fixture.to_json()
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
                 # Only if sn_nema is not None
@@ -174,9 +175,11 @@ async def new_item(request: Request):
                         old_sn_res = lms_request.delete_device(group_id=259, serial_number=old_sn)
                         log_message(f"Fixture {old_sn} deleted successfully from LMS", log_level="INFO")
                         result["delete old fixture"] = f"fixture {old_sn} deleted successfully"
+                        result["old sn result"] = old_sn_res
                     except Exception as e:
                         log_message(f"Failed to delete fixture {old_sn} from LMS: {e}", log_level="ERROR")
                         result["delete old fixture"] = "fixture not been deleted"
+                        result["error"] = str(e)
                         raise HTTPException(status_code=500, detail=str(e)) from e
                 # lms_request.update_device
 
@@ -220,7 +223,7 @@ async def new_item(request: Request):
                     )
                     log_message(f"Fixture {sn_nema} updated successfully", log_level="INFO")
                     log_message(f"Device {sn_nema} updated successfully: result = {device_res}", log_level="INFO")
-                    result["JSC result"] = f"{sn_nema} updated to JSC"
+                    result["JSC result"] = f"{sn_nema} updated to JSC, result = {fixture_id_res}"
                     result["LMS result"] = f"{sn_nema} updated to LMS, result = {device_res}"
 
                 else:
@@ -228,7 +231,7 @@ async def new_item(request: Request):
                     device_res = lms_request.create_device(group_id=259, device_data=new_device.to_json())
                     log_message(f"Fixture {sn_nema} inserted successfully", log_level="INFO")
                     log_message(f"Device {sn_nema} inserted successfully: result = {device_res}", log_level="INFO")
-                    result["JSC result"] = f"{sn_nema} inserted to JSC"
+                    result["JSC result"] = f"{sn_nema} inserted to JSC, result = {fixture_id_res}"
                     result["LMS result"] = f"{sn_nema} inserted to LMS, result = {device_res}"
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
                 result["fixture_info"] = new_fixture.to_json()
@@ -245,11 +248,13 @@ async def new_item(request: Request):
                     result["delete old fixture"] = f"fixture {old_sn} deleted successfully from JSC and LMS"
                 except Exception as e:
                     log_message(f"Failed to delete fixture {old_sn} from LMS or azure DB", log_level="ERROR")
-                    result["delete old fixture"] = f"fixture {old_sn} not been deleted. Error: {e}"
+                    result["delete old fixture"] = f"Failed to delete fixture {old_sn} from LMS or azure DB. Error: {e}"
                     raise HTTPException(status_code=500, detail=str(e)) from e
 
             db_conn.conn.commit()
             db_conn.disconnect()
+            result["Status"] = "Pass"
+            result["Message"] = "Item added to LMS and Azure DB"
             # return {
             #     "Message": "Item added to LMS and Azure DB",
             #     "LMS result": lms_request,
@@ -262,7 +267,10 @@ async def new_item(request: Request):
         else:
             log_message(f"Fixture {sn_nema} is not a Jnet fixture", log_level="Warning")
             result["LMS result"] = f"Fixture {sn_nema} is not a Jnet fixture"
-
+            result["Status"] = "Failed"
+            result[
+                "Message"
+            ] = "Item Failed to added to LMS OR Azure DB, for more details check the log or the result fields"
             # return {
             #     "LMS result": "Item not added to LMS",
             #     "Monday message": "Item added to Monday.com",
@@ -274,17 +282,25 @@ async def new_item(request: Request):
     except Exception as e:
         log_message(f"An error occured: {str(e)}", log_level="ERROR")
         result["LMS result"] = f"An error occured: {str(e)}"
+        result["LMS result"] = f"Fixture {sn_nema} is not a Jnet fixture"
+        result[
+            "Status"
+        ] = "Failed To enter the main process, check the log for more details and check carefully the request body"
+        result[
+            "Message"
+        ] = "Item Failed to added to LMS OR Azure DB, for more details check the log or the result fields"
         raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         log_message("End of webhook work from giscloud", log_level="INFO")
+        result["Monday message"] = "Item added to Monday.com"
+        result["item_id"] = item_id
         item_id = monday_handler.add_item(
             board_id=board_id,
             group_id=group_id,
             item=new_item,
         )
         monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
-        result["Monday message"] = "Item added to Monday.com"
-        result["item_id"] = item_id
+
         return result
 
 
