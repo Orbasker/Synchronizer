@@ -112,8 +112,8 @@ class MondayClient:
 
     def update_item(self, board_id: int, new_item: Item):
         formatted_date = new_item.date.strftime("%Y-%m-%d")
-        formatted_status = "לא ידוע" if not new_item.lamp_type else new_item.lamp_type
-        formatted_type_switch = "" if not new_item.type_switch else new_item.type_switch
+        formatted_status = new_item.lamp_type or "לא ידוע"
+        formatted_type_switch = new_item.type_switch or ""
         column_values = {
             "text4": new_item.notes,
             "location": {
