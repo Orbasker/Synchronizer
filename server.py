@@ -20,7 +20,9 @@ logger.addHandler(stdlogger_handler)
 
 
 app = FastAPI(
-    dependencies=[Depends(load_lms_token)],
+    dependencies=[
+        Depends(load_lms_token),
+    ],
     debug=True,
 )
 
