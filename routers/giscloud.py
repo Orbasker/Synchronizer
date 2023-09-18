@@ -127,8 +127,7 @@ async def new_item(request: Request):
                 pole=sn_nema, serial_number=sn_nema, latitude=coordinates.lat, longitude=coordinates.long, id_gateway=14
             )
             try:
-                session_site = lms_request.session("Or Yehuda - Israel")
-                session_site.raise_for_status()
+                lms_request.session("Or Yehuda - Israel")
                 new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
                 if new_sn == "duplicate entry, you can not insert records that already exist":
                     new_sn = lms_request.update_device(
