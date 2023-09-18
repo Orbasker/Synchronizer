@@ -12,7 +12,6 @@ from routers import giscloud
 stdlogger_handler = logging.StreamHandler(sys.stdout)
 stdlogger_handler.setLevel(logging.INFO)
 formatter = logging.Formatter = "%(asctime)s - %(levelname)s - %(name)s - %(message)s - %(EXTRA_DICT_KEY)s"
-
 stdlogger_handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
