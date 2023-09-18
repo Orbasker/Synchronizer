@@ -3,8 +3,11 @@ import os
 import re
 
 import pandas as pd
+from dotenv import load_dotenv
 
 from handlers.monday_handler import Coordinates, Item, MondayClient
+
+load_dotenv()
 
 
 def get_regex_result(barcode: str) -> str:
@@ -56,7 +59,7 @@ new_item = Item(
 )
 
 
-# monday.add_item(board_id=os.environ["MONDAY_BOARD_ID"], group_id=os.environ["MONDAY_GROUP_ID"], item=new_item)
+monday.add_item(board_id=os.environ["MONDAY_BOARD_ID"], group_id=os.environ["MONDAY_GROUP_ID"], item=new_item)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+# main()
