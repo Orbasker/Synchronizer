@@ -233,7 +233,7 @@ class LMSRequest:
     def associate_device_to_group(self, group_id, serial_number, associate=0):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}?associate={associate}"
         response = self.make_authenticated_request(url, "POST")
-        return response.json()
+        return response
 
     def get_all_types(self):
         url = f"{self.BASE_URL}/led/type"

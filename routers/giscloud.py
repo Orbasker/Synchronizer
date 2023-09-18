@@ -85,7 +85,6 @@ def get_site(site_id: str):
         latitude="31.15323",
         longitude="34.12343",
         id_gateway=14,
-        # idIcon=2
     )
     new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
 
@@ -96,8 +95,6 @@ async def new_item(request: Request):
     result = {}
     try:
 
-        # request_dict = await  json.loads(request.body)
-        # db_conn.connect()
         item_data_request = await request.json()
         log_message("New webhook request from giscloud", log_level="INFO")
         log_message(f"item_data_request: {item_data_request}", log_level="INFO")
@@ -108,11 +105,8 @@ async def new_item(request: Request):
         sn_nema = item_data.get("sn_nema")
         sn_nema = get_regex_result(sn_nema)
         sn_type = define_barcode_type(sn_nema)
-        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%d %H:%M:%S")
         date_str = item_data.get("date")
         insertion_date = parser.isoparse(date_str)
-        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
-        # insertion_date = datetime.strptime(item_data.get("date"), "%Y-%m-%dT%H:%M:%S%z")
 
         coordinates = Coordinates(
             long=float(item_data.get("longitude")),
@@ -128,7 +122,6 @@ async def new_item(request: Request):
         reason = item_data.get("svg")
         # Create an Item object based on the extracted data
         # take picture raw data from giscloud and send it to monday
-        # picture_raw_data= mond
         layer_id = os.getenv("GIS_CLOUD_LAYER_ID")
         picture_raw_data = gis_handler.get_picture(layer_id=layer_id, feature_id=gis_feature_id, file_name=picture)
 
@@ -168,7 +161,6 @@ async def new_item(request: Request):
                 result["new_sn"] = new_sn
                 result["fixture_info"] = new_fixture.to_json()
                 log_message(f"Fixture info: {new_fixture.to_json()}", log_level="INFO")
-                # Only if sn_nema is not None
                 old_sn_res = None
                 if old_sn is not None:
                     try:
@@ -181,17 +173,6 @@ async def new_item(request: Request):
                         result["delete old fixture"] = "fixture not been deleted"
                         result["error"] = str(e)
                         raise HTTPException(status_code=500, detail=str(e)) from e
-                # lms_request.update_device
-
-                # return {
-                #     "LMS result": "Item added to LMS",
-                #     "new_sn": new_sn,
-                #     "old_sn": old_sn_res,
-                #     "Monday message": "Item added to Monday.com",
-                #     "item_id": item_id,
-                #     "delete old fixture": "fixture deleted successfully",
-                #     "fixture_sn": old_sn,
-                # }
 
             except Exception as e:
                 log_message(f"Failed to insert fixture {sn_nema} to LMS: {e}", log_level="ERROR")
@@ -205,8 +186,7 @@ async def new_item(request: Request):
                 latitude=coordinates.lat,
                 longitude=coordinates.long,
                 id_gateway=19,
-                ident=polygon_handler.get_getway_id(lon=coordinates.long, lat=coordinates.lat)
-                # gateway_id should be desided based on location using polygons layer
+                ident=polygon_handler.get_getway_id(lon=coordinates.long, lat=coordinates.lat),
             )
             new_device = DeviceData(
                 serial_number=sn_nema,
@@ -255,15 +235,7 @@ async def new_item(request: Request):
             db_conn.disconnect()
             result["Status"] = "Pass"
             result["Message"] = "Item added to LMS and Azure DB"
-            # return {
-            #     "Message": "Item added to LMS and Azure DB",
-            #     "LMS result": lms_request,
-            #     "JSC result": fixture_id_res,
-            #     "Monday message": "Item added to Monday.com",
-            #     "item_id": item_id,
-            #     "delete old fixture": "fixture deleted successfully",
-            #     "fixture_sn": old_sn,
-            # }
+
         else:
             log_message(f"Fixture {sn_nema} is not a Jnet fixture", log_level="Warning")
             result["LMS result"] = f"Fixture {sn_nema} is not a Jnet fixture"
@@ -271,13 +243,6 @@ async def new_item(request: Request):
             result[
                 "Message"
             ] = "Item Failed to added to LMS OR Azure DB, for more details check the log or the result fields"
-            # return {
-            #     "LMS result": "Item not added to LMS",
-            #     "Monday message": "Item added to Monday.com",
-            #     "item id": item_id,
-            #     "delete old fixture": "fixture not been deleted",
-            #     "old fixture sn": old_sn,
-            # }
 
     except Exception as e:
         log_message(f"An error occured: {str(e)}", log_level="ERROR")
@@ -292,6 +257,11 @@ async def new_item(request: Request):
         raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         log_message("End of webhook work from giscloud", log_level="INFO")
+        if type_switch is not None and type_switch in LMS_groups.keys():
+            relay_group_id = LMS_groups[type_switch]
+            group_result = lms_request.associate_device_to_group(group_id=relay_group_id, serial_number=sn_nema)
+            result["group associate result"] = group_result
+        # test = lms_request.associate_device_to_group(group_id=286,serial_number=sn_nema)
         result["Monday message"] = "Item added to Monday.com"
         item_id = monday_handler.add_item(
             board_id=board_id,
@@ -300,7 +270,8 @@ async def new_item(request: Request):
         )
         result["item_id"] = item_id
         monday_handler.add_item_picture(item_id=item_id, image_raw_data=picture_raw_data)
-
+        log_message(f"Item {item_id} added to Monday.com", log_level="INFO")
+        log_message(f"Result: {result}", log_level="INFO")
         return result
 
 
@@ -318,3 +289,17 @@ def define_barcode_type(regex_result: str) -> str:
         return "Jnet0"
     else:
         return "Unknown"
+
+
+LMS_groups = {
+    "Illuminated flag": 286,
+    "grilanda": 284,
+    "Pedestrian sign": 282,
+    "tree switches": 280,
+    "Or Yehuda Garden Flood": 288,
+    "roundabout button": 283,
+    "Logo sign": 285,
+    "football switches": 346,
+    "24/7 sign": 372,
+    "V-led": 369,
+}
