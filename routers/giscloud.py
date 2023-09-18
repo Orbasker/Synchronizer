@@ -1,15 +1,9 @@
-import json
 import os
 import re
-from datetime import datetime
-
-# from typing import Annotated,Dict
-from urllib.request import Request
 
 from dateutil import parser
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
-from dependencies import load_lms_token
 from handlers import polygon_handler
 from handlers.giscloud_handler import GisCloudHandler
 from handlers.jsc_hanler import (
@@ -75,20 +69,6 @@ def get_sites():
     return {"message": "Hello World", "session_site": session_site, "new_sn": new_sn}
 
 
-@router.get("/sites/{site_id}")
-def get_site(site_id: str):
-    lms_request.session(site_id)
-    session_site = lms_request.session("Or Yehuda - Israel")
-    new_fixture = DeviceData(
-        serial_number="10344104",
-        pole="10344104",
-        latitude="31.15323",
-        longitude="34.12343",
-        id_gateway=14,
-    )
-    new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
-
-
 @router.post("/giscloud")
 async def new_item(request: Request):
     # db_conn.connect()
@@ -148,6 +128,7 @@ async def new_item(request: Request):
             )
             try:
                 session_site = lms_request.session("Or Yehuda - Israel")
+                session_site.raise_for_status()
                 new_sn = lms_request.create_device(group_id=259, device_data=new_fixture.to_json())
                 if new_sn == "duplicate entry, you can not insert records that already exist":
                     new_sn = lms_request.update_device(

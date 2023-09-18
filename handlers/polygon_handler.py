@@ -1,5 +1,5 @@
 import geopandas as gpd
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point
 
 gdf = gpd.read_file("or_yehuda.shp")
 Jnet_0_gw_id = {
@@ -14,8 +14,7 @@ Jnet_0_gw_id = {
 def get_getway_id(lon, lat) -> str:
     # Load your polygon data, replace 'your_polygon_data.shp' with your file
     # Find the polygon id that contains the point
-    point = Point(lon, lat)
-    gw_df = gdf.query("geometry.contains(@point)")
+    gw_df = gdf.query(f"geometry.contains(@{Point(lon, lat)})")
     gw_index = gw_df["id"].values[0]
     return Jnet_0_gw_id[str(gw_index)]
 

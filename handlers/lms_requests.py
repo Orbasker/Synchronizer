@@ -309,26 +309,17 @@ class LMSRequest:
         return response.json()
 
     def send_group_command(self, group_id, opcode, arg1=None):
-        url = f"{self.BASE_URL}/led/groups/{group_id}/commands/{opcode}"
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
-        data = {}
-        if arg1 is not None:
-            data["arg1"] = arg1
-        response = self.make_authenticated_request(url, "POST", json=data)
-        return response.json()
+        return self._extracted_from_send_gateway_command_2("/led/groups/", group_id, opcode, arg1)
 
     def send_device_command(self, serial_number, opcode, arg1=None):
-        url = f"{self.BASE_URL}/led/devices/{serial_number}/commands/{opcode}"
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
-        data = {}
-        if arg1 is not None:
-            data["arg1"] = arg1
-        response = self.make_authenticated_request(url, "POST", json=data)
-        return response.json()
+        return self._extracted_from_send_gateway_command_2("/led/devices/", serial_number, opcode, arg1)
 
     def send_gateway_command(self, gateway_id, opcode, arg1=None):
-        url = f"{self.BASE_URL}/led/gateways/{gateway_id}/commands/{opcode}"
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+        return self._extracted_from_send_gateway_command_2("/led/gateways/", gateway_id, opcode, arg1)
+
+    # TODO Rename this here and in `send_group_command`, `send_device_command` and `send_gateway_command`
+    def _extracted_from_send_gateway_command_2(self, arg0, arg1, opcode):
+        url = f"{self.BASE_URL}{arg0}{arg1}/commands/{opcode}"
         data = {}
         if arg1 is not None:
             data["arg1"] = arg1
@@ -337,33 +328,28 @@ class LMSRequest:
 
     def create_light_profile(self, name, typeLP, events):
         url = f"{self.BASE_URL}/led/profiles"
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
         data = {"name": name, "typeLP": typeLP, "events": events}
         response = self.make_authenticated_request(url, "POST", json=data)
         return response.json()
 
     def get_all_light_profiles(self):
         url = f"{self.BASE_URL}/led/profiles"
-        headers = {"Authorization": f"Bearer {self.token}"}
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
     def get_light_profile(self, idLP):
         url = f"{self.BASE_URL}/led/profiles/{idLP}"
-        headers = {"Authorization": f"Bearer {self.token}"}
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
     def update_light_profile(self, idLP, name, typeLP, events):
         url = f"{self.BASE_URL}/led/profiles/{idLP}"
-        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
         data = {"name": name, "typeLP": typeLP, "events": events}
         response = self.make_authenticated_request(url, "PUT", json=data)
         return response.json()
 
     def delete_light_profile(self, idLP):
         url = f"{self.BASE_URL}/led/profiles/{idLP}"
-        headers = {"Authorization": f"Bearer {self.token}"}
         response = self.make_authenticated_request(url, "DELETE")
         return response.status_code
 

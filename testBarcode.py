@@ -1,9 +1,10 @@
+import datetime
 import os
 import re
 
 import pandas as pd
 
-from handlers.lms_requests import DeviceData, LMSRequest
+from handlers.monday_handler import Coordinates, Item, MondayClient
 
 
 def get_regex_result(barcode: str) -> str:
@@ -38,10 +39,6 @@ def main():
     # Save the results to the output file
     df.to_csv(output_file, index=False)
 
-
-import datetime
-
-from handlers.monday_handler import Coordinates, Item, MondayClient
 
 monday = MondayClient(api_key=os.environ["MONDAY_API_KEY"])
 cordinate = Coordinates(long=34.872224, lat=32.027169)

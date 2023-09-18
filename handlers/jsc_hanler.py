@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-import os
 import urllib
 from dataclasses import dataclass
 from decimal import Decimal
@@ -9,30 +8,21 @@ from decimal import Decimal
 import geopandas as gpd
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import (
-    Column,
-    Float,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    create_engine,
-    inspect,
-)
+from shapely.geometry import Point
+from sqlalchemy import MetaData, Table, create_engine, inspect
 from sqlalchemy.orm import Session
 
 # Load your polygon data, replace 'your_polygon_data.shp' with your file
 gdf = gpd.read_file("Jnet_0_gws.shp")
 # log_file = open("app.log", "a")
+
+
 def log_message(message, log_level=logging.INFO):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"{timestamp} [{log_level}]: {message}"
     # log_file.write(message + "\n")
     # log_file.flush()
     print(log_entry)
-
-
-from shapely.geometry import Point, Polygon
 
 
 def get_getway_id(lon, lat):

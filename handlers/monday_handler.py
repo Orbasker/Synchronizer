@@ -76,7 +76,7 @@ class MondayClient:
                 item_name: "{item.sn}",
                 create_labels_if_missing: true,
                 column_values: "{{\\"text4\\": \\"{item.notes}\\", \\"location\\": {{\\"lat\\": \\"{item.address.lat}\\", \\"lng\\":\\"{item.address.long}\\", \\"address\\":\\"{item.sn}\\"}}, \\"date4\\": {{\\"date\\": \\"{formatted_date}\\"}}, \\"text7\\": \\"{item.old_sn}\\", \\"label3\\": {{\\"label\\": \\"{formatted_status}\\"}}, \\"status_1\\": {{\\"label\\": \\"{formatted_type_switch}\\"}}, \\"long_text\\": \\"{item.webhook_response}\\"}}"
-            ) 
+            )
             {{
                 id
             }}
@@ -108,7 +108,7 @@ class MondayClient:
         headers = {
             "Authorization": self.api_key,
         }
-        response = requests.post(self._base_url, headers=headers, data=payload, files=files)
+        return requests.post(self._base_url, headers=headers, data=payload, files=files)
 
     def update_item(self, board_id: int, new_item: Item):
         formatted_date = new_item.date.strftime("%Y-%m-%d")
@@ -133,9 +133,9 @@ class MondayClient:
                         board_id: {board_id}
                         item_id: {new_item.item_id}
                             column_values: '{column_values_str}'
-                    ) 
+                    )
                     {{
                         id
-                    }} 
+                    }}
                     }}"""
         self._query(update_query)
