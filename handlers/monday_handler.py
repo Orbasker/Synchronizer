@@ -66,8 +66,8 @@ class MondayClient:
         item: Item,
     ) -> str:
         formatted_date = item.date.strftime("%Y-%m-%d")
-        formatted_status = "לא ידוע" if not item.lamp_type else item.lamp_type
-        formatted_type_switch = "" if not item.type_switch else item.type_switch
+        formatted_status = item.lamp_type or "לא ידוע"
+        formatted_type_switch = item.type_switch or ""
         payload = f"""
         mutation {{
             create_item(
@@ -76,7 +76,7 @@ class MondayClient:
                 item_name: "{item.sn}",
                 create_labels_if_missing: true,
                 column_values: "{{\\"text4\\": \\"{item.notes}\\", \\"location\\": {{\\"lat\\": \\"{item.address.lat}\\", \\"lng\\":\\"{item.address.long}\\", \\"address\\":\\"{item.sn}\\"}}, \\"date4\\": {{\\"date\\": \\"{formatted_date}\\"}}, \\"text7\\": \\"{item.old_sn}\\", \\"label3\\": {{\\"label\\": \\"{formatted_status}\\"}}, \\"status_1\\": {{\\"label\\": \\"{formatted_type_switch}\\"}}, \\"long_text\\": \\"{item.webhook_response}\\"}}"
-            )
+            ) 
             {{
                 id
             }}
@@ -133,9 +133,9 @@ class MondayClient:
                         board_id: {board_id}
                         item_id: {new_item.item_id}
                             column_values: '{column_values_str}'
-                    )
+                    ) 
                     {{
                         id
-                    }}
+                    }} 
                     }}"""
         self._query(update_query)
