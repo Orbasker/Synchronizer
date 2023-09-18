@@ -285,7 +285,7 @@ def get_regex_result(barcode: str) -> str:
 def define_barcode_type(regex_result: str) -> str:
     if regex_result and regex_result.startswith("103"):
         return "Jnet1"
-    elif regex_result and regex_result[:3] in ["402", "750", "220", "470", "200"]:
+    elif regex_result and regex_result[:3] in ["402", "750", "220", "470", "200", "400", "120"]:
         return "Jnet0"
     else:
         return "Unknown"

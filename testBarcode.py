@@ -16,8 +16,8 @@ def get_regex_result(barcode: str) -> str:
 def define_barcode_type(regex_result: str) -> str:
     if regex_result and regex_result.startswith("103"):
         return "Jnet1"
-    elif regex_result and regex_result[:3] in ["402", "750", "220", "470", "200"]:
-        return "Jnet 0"
+    elif regex_result and regex_result[:3] in ["402", "750", "220", "470", "200", "400", "120"]:
+        return "Jnet0"
     else:
         return "Unknown"
 
@@ -59,7 +59,7 @@ new_item = Item(
 )
 
 
-monday.add_item(board_id=os.environ["MONDAY_BOARD_ID"], group_id=os.environ["MONDAY_GROUP_ID"], item=new_item)
+# monday.add_item(board_id=os.environ["MONDAY_BOARD_ID"], group_id=os.environ["MONDAY_GROUP_ID"], item=new_item)
 
-# if __name__ == "__main__":
-# main()
+if __name__ == "__main__":
+    main()
