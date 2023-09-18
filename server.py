@@ -1,5 +1,4 @@
 import logging
-import sys
 
 import uvicorn
 from dotenv import load_dotenv
@@ -9,13 +8,7 @@ from starlette.responses import RedirectResponse
 from dependencies import load_lms_token
 from routers import giscloud
 
-stdlogger_handler = logging.StreamHandler(sys.stdout)
-stdlogger_handler.setLevel(logging.INFO)
-formatter = logging.Formatter = "%(asctime)s - %(levelname)s - %(name)s - %(message)s - %(EXTRA_DICT_KEY)s"
-stdlogger_handler.setFormatter(formatter)
-
 logger = logging.getLogger(__name__)
-logger.addHandler(stdlogger_handler)
 
 
 app = FastAPI(
