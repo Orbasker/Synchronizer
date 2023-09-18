@@ -13,3 +13,4 @@ geopandas
 shapely
 pandas
 python-dateutil
+coloredlogs

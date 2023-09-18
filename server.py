@@ -1,3 +1,4 @@
+import coloredlogs
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
@@ -5,6 +6,8 @@ from starlette.responses import RedirectResponse
 
 from dependencies import load_lms_token
 from routers import giscloud
+
+coloredlogs.install()
 
 app = FastAPI(
     dependencies=[Depends(load_lms_token)],

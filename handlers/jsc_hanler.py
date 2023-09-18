@@ -1,9 +1,8 @@
-import datetime
 import json
-import logging
 import urllib
 from dataclasses import dataclass
 from decimal import Decimal
+from logging import getLogger
 
 import geopandas as gpd
 import pandas as pd
@@ -16,13 +15,7 @@ from sqlalchemy.orm import Session
 gdf = gpd.read_file("Jnet_0_gws.shp")
 # log_file = open("app.log", "a")
 
-
-def log_message(message, log_level=logging.INFO):
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_entry = f"{timestamp} [{log_level}]: {message}"
-    # log_file.write(message + "\n")
-    # log_file.flush()
-    print(log_entry)
+logger = getLogger(__name__)
 
 
 def get_getway_id(lon, lat):
@@ -131,11 +124,10 @@ class AzureDbConnection:
         try:
             query = self.tbl_fixtures.insert().values(**fixture_dict).returning(self.tbl_fixtures.columns.id)
             result = self.conn.execute(query)
-            log_message(f"Fixture {fixture.name} was added successfully")
+            logger.info("fixture was added successfully", extra={"fixture": fixture.name})
             return result.scalar()
-        except Exception as e:
-            log_message(f"An error occured: {str(e)}", log_level=logging.ERROR)
-            return None
+        except Exception:
+            logger.error("an error occured", exc_info=True, extra={"fixture": fixture.name})
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
         try:
@@ -143,10 +135,10 @@ class AzureDbConnection:
                 query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.name == fixture_name)
             else:
                 query = self.tbl_fixtures.delete().where(self.tbl_fixtures.columns.id == fixture_id)
-            log_message(f"Fixture {fixture_name} was deleted successfully")
+            logger.info("fixture was deleted successfully", extra={"fixture": fixture_name})
             return self.conn.execute(query)
-        except Exception as e:
-            log_message(f"An error occured: {str(e)}", log_level=logging.ERROR)
+        except Exception:
+            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
             return None
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
@@ -165,8 +157,8 @@ class AzureDbConnection:
             output = self.conn.execute(query)
             results = output.fetchall()
             return len(results) != 0
-        except Exception as e:
-            log_message(f"An error occured- Didnt find SN: {str(e)}", log_level=logging.ERROR)
+        except Exception:
+            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
             return False
 
 
