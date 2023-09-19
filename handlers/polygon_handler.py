@@ -14,7 +14,9 @@ Jnet_0_gw_id = {
 def get_getway_id(lon, lat) -> str:
     # Load your polygon data, replace 'your_polygon_data.shp' with your file
     # Find the polygon id that contains the point
-    gw_df = gdf.query(f"geometry.contains(@{Point(lon, lat)})")
+    point = Point(lon, lat)
+    print(point)
+    gw_df = gdf.query("geometry.contains(@point)")
     gw_index = gw_df["id"].values[0]
     return Jnet_0_gw_id[str(gw_index)]
 
