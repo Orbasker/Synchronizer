@@ -201,7 +201,7 @@ async def new_item(request: Request):
                 result["fixture_info"] = new_fixture.to_json()
             except Exception as e:
                 db_conn.conn.rollback()
-                logger.error("failed to insert fixture", exc_info=True, extra={"fixture_info": new_fixture.to_json()})
+                logger.error("failed to insert fixture", exc_info=True, extra={"fixture_info": new_fixture.to_dict()})
                 result["JSC result"] = f"Failed to insert fixture {sn_nema} to DB: {e}"
                 print(e)
             if old_sn is not None:
