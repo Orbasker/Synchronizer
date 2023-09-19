@@ -127,7 +127,7 @@ class AzureDbConnection:
             logger.info("fixture was added successfully", extra={"fixture": fixture.name})
             return result.scalar()
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture.name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture.name})
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
         try:
@@ -138,7 +138,7 @@ class AzureDbConnection:
             logger.info("fixture was deleted successfully", extra={"fixture": fixture_name})
             return self.conn.execute(query)
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture_name})
             return None
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
@@ -158,7 +158,7 @@ class AzureDbConnection:
             results = output.fetchall()
             return len(results) != 0
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture_name})
             return False
 
 

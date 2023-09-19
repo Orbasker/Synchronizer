@@ -229,7 +229,7 @@ async def new_item(request: Request):
 
     except Exception as e:
         logger.error("fixture not been inserted", exc_info=True, extra={"sn_nema": sn_nema})
-        result["LMS result"] = f"An error occured: {str(e)}"
+        result["LMS result"] = f"An error occurred: {str(e)}"
         result["LMS result"] = f"Fixture {sn_nema} is not a Jnet fixture"
         result[
             "Status"
