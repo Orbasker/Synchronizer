@@ -217,6 +217,8 @@ class LMSRequest:
         )
 
     def update_device(self, group_id, serial_number, device_data):
+        # asosicate = self.associate_device_to_group(group_id=259, serial_number=serial_number, associate=0)
+        # asosicate.raise_for_status()
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
         return self.make_authenticated_request(url, "PUT", json_data=device_data)
         # return response.json()
@@ -238,9 +240,7 @@ class LMSRequest:
         return self._extracted_from_get_all_light_profiles_2("/led/type")
 
     def get_type_by_id(self, type_id):
-        url = f"{self.BASE_URL}/led/type/{type_id}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/type/", type_id)
 
     def create_gateway(
         self,
@@ -267,9 +267,7 @@ class LMSRequest:
         return self._extracted_from_get_all_light_profiles_2("/led/gateways")
 
     def get_gateway_by_id(self, id_gateway):
-        url = f"{self.BASE_URL}/led/gateways/{id_gateway}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/gateways/", id_gateway)
 
     def update_gateway(
         self,
@@ -297,9 +295,7 @@ class LMSRequest:
         return self._extracted_from_get_all_light_profiles_2("/led/commands")
 
     def get_command_by_id(self, idCommand):
-        url = f"{self.BASE_URL}/led/commands/{idCommand}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/commands/", idCommand)
 
     def send_group_command(self, group_id, opcode, arg1=None):
         return self._extracted_from_send_gateway_command_2("/led/groups/", group_id, opcode, arg1)
@@ -335,7 +331,11 @@ class LMSRequest:
         return response.json()
 
     def get_light_profile(self, idLP):
-        url = f"{self.BASE_URL}/led/profiles/{idLP}"
+        return self._extracted_from_get_light_profile_2("/led/profiles/", idLP)
+
+    # TODO Rename this here and in `get_type_by_id`, `get_gateway_by_id`, `get_command_by_id` and `get_light_profile`
+    def _extracted_from_get_light_profile_2(self, arg0, arg1):
+        url = f"{self.BASE_URL}{arg0}{arg1}"
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 

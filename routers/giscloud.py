@@ -179,14 +179,14 @@ async def new_item(request: Request):
                 if db_conn.fixture_exists(sn_nema):
                     fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=sn_nema)
                     logger.info("fixture updated successfully to azure DB", extra={"fixture_id_res": fixture_id_res})
-                    device_res = lms_request.update_device(
-                        group_id=259,
-                        device_data=new_device.to_json(),
-                        serial_number=new_device.get_serial_number(),
-                    )
-                    logger.info("fixture updated successfully to LMS", extra={"device_res": device_res})
+                    # device_res = lms_request.update_device(
+                    #     group_id=259,
+                    #     device_data=new_device.to_json(),
+                    #     serial_number=new_device.get_serial_number(),
+                    # )
+                    # logger.info("fixture updated successfully to LMS", extra={"device_res": device_res})
                     result["JSC result"] = f"{sn_nema} updated to JSC, result = {fixture_id_res}"
-                    result["LMS result"] = f"{sn_nema} updated to LMS, result = {device_res}"
+                    # result["LMS result"] = f"{sn_nema} updated to LMS, result = {device_res}"
 
                 else:
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
@@ -198,7 +198,19 @@ async def new_item(request: Request):
                     logger.info("fixture inserted successfully to LMS", extra={"device_res": device_res})
                     result["JSC result"] = f"{sn_nema} inserted to JSC, result = {fixture_id_res}"
                     result["LMS result"] = f"{sn_nema} inserted to LMS, result = {device_res}"
-                result["fixture_info"] = new_fixture.to_json()
+                result["fixture_info"] = new_fixture.to_dict()
+            except HTTPException as e:
+                if e.status_code == 409:
+                    logger.warning(
+                        "fixture Updated in azure DB but had conflict with LMS + possibly there is not much change in the fixture",
+                        extra={
+                            "sn_nema": sn_nema,
+                            "fixture_info": new_fixture.to_json(),
+                            "device_info": new_device.to_json(),
+                            HTTPException: 409,
+                        },
+                    )
+                    result["JSC result"] = f"Fixture {sn_nema} already exists in azure DB"
             except Exception as e:
                 db_conn.conn.rollback()
                 logger.error("failed to insert fixture", exc_info=True, extra={"fixture_info": new_fixture.to_dict()})
