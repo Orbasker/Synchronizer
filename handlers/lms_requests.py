@@ -218,8 +218,9 @@ class LMSRequest:
 
     def update_device(self, group_id, serial_number, device_data):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
-        return self.make_authenticated_request(url, "PUT", json_data=device_data)
-        # return response.json()
+        results = self.make_authenticated_request(url, "PUT", json_data=device_data)
+        results.raise_for_status()
+        return results
 
     def delete_device(self, group_id, serial_number):
         if serial_number == "":

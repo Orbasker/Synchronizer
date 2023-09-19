@@ -1,3 +1,5 @@
+import os
+
 import coloredlogs
 import uvicorn
 from dotenv import load_dotenv
@@ -7,7 +9,9 @@ from starlette.responses import RedirectResponse
 from dependencies import load_lms_token
 from routers import giscloud
 
-coloredlogs.install()
+coloredlogs.install(
+    fmt="%(asctime)s.%(msecs)03d - %(levelname)-0s - %(filename)s - %(funcName)s - %(message)s",
+)
 
 app = FastAPI(
     dependencies=[Depends(load_lms_token)],
@@ -28,8 +32,9 @@ async def root():
 
 
 if __name__ == "__main__":
+
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=80,
+        port=8080 if os.getenv("ENV") == "LOCAL" else 80,
     )

@@ -6,6 +6,7 @@ from logging import getLogger
 
 from dateutil import parser
 from fastapi import APIRouter, HTTPException, Request
+from requests.exceptions import HTTPError
 
 from handlers import polygon_handler
 from handlers.giscloud_handler import GisCloudHandler
@@ -13,9 +14,9 @@ from handlers.jsc_hanler import AzureDbConnection, ConnectionSettings, Fixture
 from handlers.lms_requests import DeviceData, LMSRequest
 from handlers.monday_handler import Coordinates, MondayClient, MondayItem
 
-logger = getLogger(__name__)
+logger = getLogger("giscloud")
 
-router = APIRouter("/giscloud")
+router = APIRouter()
 
 
 lms_base_url = os.getenv("LMS_API_BASEURL")
@@ -55,6 +56,7 @@ class GisItem:
     type_switches: str
     lamp_type: str
     reason: str
+    jnet_type: str
 
 
 async def extract_gis_item(req: Request) -> GisItem:
@@ -70,10 +72,10 @@ async def extract_gis_item(req: Request) -> GisItem:
 
     return GisItem(
         jnet_type=assign_jnet_type(sn_nema),
-        ogc_fid=int(data["ogc_fid"]),
+        feature_id=int(data["ogc_fid"]),
         sn_nema=sn_nema,
         old_sn=extract_sn_nema_from_barcode(data["old_sn"]),
-        date=parser.isoparse(data["datetime"]),
+        datetime=parser.isoparse(data["date"]),
         coordinate=Coordinates(
             long=float(data["longitude"]),
             lat=float(data["latitude"]),
@@ -87,25 +89,27 @@ async def extract_gis_item(req: Request) -> GisItem:
 
 
 def handle_jnet_1(gis_item: GisItem) -> dict:
-    try:
-        new_fixture = DeviceData(
-            pole=gis_item.sn_nema,
-            serial_number=gis_item.sn_nema,
-            latitude=gis_item.coordinate.lat,
-            longitude=gis_item.coordinate.long,
-            id_gateway=14,
-        )
-        lms_request.session("Or Yehuda - Israel")
-        new_fixture_json = new_fixture.to_json()
-        new_sn = lms_request.create_device(
-            group_id=259,
-            device_data=new_fixture_json,
-        )
+    new_fixture = DeviceData(
+        pole=gis_item.sn_nema,
+        serial_number=gis_item.sn_nema,
+        latitude=gis_item.coordinate.lat,
+        longitude=gis_item.coordinate.long,
+        id_gateway=14,
+    )
+    lms_request.session("Or Yehuda - Israel")
+    new_fixture_json = new_fixture.to_json()
 
-        results = {}
+    new_sn = lms_request.create_device(
+        group_id=259,
+        device_data=new_fixture_json,
+    )
 
-        if new_sn == "duplicate entry, you can not insert records that already exist":
-            logger.info("fixture already exists in LMS", extra={"sn_nema": gis_item.sn_nema})
+    results = {}
+
+    if new_sn == "duplicate entry, you can not insert records that already exist":
+        logger.info("fixture already exists in LMS", extra={"sn_nema": gis_item.sn_nema})
+
+        try:
             new_sn = lms_request.update_device(
                 group_id=259,
                 device_data=new_fixture_json,
@@ -113,45 +117,40 @@ def handle_jnet_1(gis_item: GisItem) -> dict:
             )
             logger.info("fixture updated successfully to LMS", extra={"new_sn": new_sn, "sn_nema": gis_item.sn_nema})
             results["LMS result"] = f"{gis_item.sn_nema} updated to LMS"
-        else:
-            logger.info("fixture inserted successfully to LMS", extra={"new_sn": new_sn, "sn_nema": gis_item.sn_nema})
-            results["LMS result"] = f"{gis_item.s} inserted to LMS"
-
-        results["new_sn"] = new_sn
-        results["fixture_info"] = new_fixture_json
-        logger.info("fixture info", extra={"fixture_info": new_fixture_json})
-
-        old_sn_res = None
-        if gis_item.old_sn:
-            try:
-                old_sn_res = lms_request.delete_device(group_id=259, serial_number=gis_item.old_sn)
-                logger.info("fixture deleted successfully from LMS", extra={"old_sn": gis_item.old_sn})
-                results["delete old fixture"] = f"fixture {gis_item.old_sn} deleted successfully"
-                results["old sn result"] = old_sn_res
-            except Exception as e:
-                logger.error("fixture not been deleted", exc_info=True, extra={"old_sn": gis_item.old_sn})
-                results["delete old fixture"] = "fixture not been deleted"
-                results["error"] = str(e)
-                raise HTTPException(status_code=500) from e
-
-        if gis_item.type_switches in LMS_GROUPS.keys():
-            relay_group_id = LMS_GROUPS[gis_item.type_switch]
-            group_result = lms_request.associate_device_to_group(
-                group_id=relay_group_id, serial_number=gis_item.sn_nema
+        except HTTPError:
+            logger.error(
+                "fixture has not been updated",
+                exc_info=True,
+                extra={"sn_nema": gis_item.sn_nema, "fixture_info": new_fixture_json},
             )
-            results["group associate result"] = group_result
+            results["LMS result"] = f"failed to insert fixture {gis_item.sn_nema}"
 
-    except Exception as e:
-        logger.error(
-            "fixture has not been inserted",
-            exc_info=True,
-            extra={"sn_nema": gis_item.sn_nema, "fixture_info": new_fixture_json},
-        )
-        results["LMS result"] = f"failed to insert fixture {gis_item.sn_nema} to LMS: {e}"
-        raise e
+    else:
+        logger.info("fixture inserted successfully to LMS", extra={"new_sn": new_sn, "sn_nema": gis_item.sn_nema})
+        results["LMS result"] = f"{gis_item.s} inserted to LMS"
 
-    finally:
-        return results
+    results["new_sn"] = new_sn
+    results["fixture_info"] = new_fixture_json
+    logger.info("fixture info", extra={"fixture_info": new_fixture_json})
+
+    if gis_item.old_sn:
+        try:
+            old_sn_res = lms_request.delete_device(group_id=259, serial_number=gis_item.old_sn)
+            logger.info("fixture deleted successfully from LMS", extra={"old_sn": gis_item.old_sn})
+            results["delete old fixture"] = f"fixture {gis_item.old_sn} deleted successfully"
+            results["old sn result"] = old_sn_res
+        except Exception as e:
+            logger.error("fixture not been deleted", exc_info=True, extra={"old_sn": gis_item.old_sn})
+            results["delete old fixture"] = "fixture not been deleted"
+            results["error"] = str(e)
+            raise HTTPException(status_code=500) from e
+
+    if gis_item.type_switches in LMS_GROUPS.keys():
+        relay_group_id = LMS_GROUPS[gis_item.type_switch]
+        group_result = lms_request.associate_device_to_group(group_id=relay_group_id, serial_number=gis_item.sn_nema)
+        results["group associate result"] = group_result
+
+    return results
 
 
 def handle_jnet_0(gis_item: GisItem) -> dict:
@@ -236,66 +235,57 @@ def assign_jnet_type(regex_result: str) -> str:
         return "Unknown"
 
 
-@router.post("/")
+@router.post("/giscloud")
 async def new_item(request: Request):
-    try:
-        logger.info("new webhook request from giscloud")
-        gis_item = extract_gis_item(request)
+    results = {}
+    logger.info("new webhook request from giscloud")
+    gis_item = await extract_gis_item(request)
 
-        logger.info("initializing monday handler")
-        monday_api_key = os.getenv("MONDAY_API_KEY")
-        monday_handler = MondayClient(monday_api_key)
+    logger.info("initializing monday handler")
+    monday_api_key = os.getenv("MONDAY_API_KEY")
+    monday_handler = MondayClient(monday_api_key)
 
-        picture_raw_data = gis_handler.get_picture(
-            layer_id=os.getenv("GIS_CLOUD_LAYER_ID"),
-            feature_id=gis_item.feature_id,
-            file_name=gis_item.picture,
-        )
+    picture_raw_data = gis_handler.get_picture(
+        layer_id=os.getenv("GIS_CLOUD_LAYER_ID"),
+        feature_id=gis_item.feature_id,
+        file_name=gis_item.picture,
+    )
 
-        monday_item = MondayItem(
-            sn_nema=gis_item.sn_nema,
-            insertion_date=gis_item.datetime,
-            coordinates=gis_item.coordinate,
-            picture=gis_item.picture,
-            picture_raw_data=picture_raw_data,
-            notes=gis_item.note,
-            old_sn=gis_item.old_sn,
-            type_switch=gis_item.type_switches,
-            lamp_type=gis_item.lamp_type,
-            reason=gis_item.reason,
-            webhook_response={},
-        )
+    monday_item = MondayItem(
+        sn_nema=gis_item.sn_nema,
+        insertion_date=gis_item.datetime,
+        coordinates=gis_item.coordinate,
+        picture=gis_item.picture,
+        picture_raw_data=picture_raw_data,
+        notes=gis_item.note,
+        old_sn=gis_item.old_sn,
+        type_switch=gis_item.type_switches,
+        lamp_type=gis_item.lamp_type,
+        reason=gis_item.reason,
+        webhook_response={},
+    )
 
-        board_id = int(os.getenv("MONDAY_BOARD_ID"))
-        group_id = os.getenv("MONDAY_GROUP_ID")
+    board_id = int(os.getenv("MONDAY_BOARD_ID"))
+    group_id = os.getenv("MONDAY_GROUP_ID")
 
-        if gis_item.jnet_type == "Jnet1":
-            logger.info("fixture type is a Jnet1", extra={"sn_nema": gis_item.sn_nema})
-            results = handle_jnet_1(gis_item=gis_item)
-        elif gis_item.jnet_type == "Jnet0":
-            logger.info("fixture type is a Jnet0", extra={"sn_nema": gis_item.sn_nema})
-            results = handle_jnet_0(gis_item=gis_item)
-        else:
-            logger.warning("fixture type is unknown", extra={"sn_nema": gis_item.sn_nema})
-            results = {
-                "LMS result": f"fixture {gis_item.sn_nema} is not a Jnet fixture",
-                "Status": "Failed",
-                "Message": "Item Failed to added to LMS OR Azure DB, for more details check the log or the result fields",
-            }
-
-    except Exception as e:
-        logger.error("fixture not been inserted", exc_info=True, extra={"sn_nema": gis_item.sn_nema})
+    if gis_item.jnet_type == "Jnet1":
+        logger.info("fixture type is a Jnet1", extra={"sn_nema": gis_item.sn_nema})
+        results = handle_jnet_1(gis_item=gis_item)
+    elif gis_item.jnet_type == "Jnet0":
+        logger.info("fixture type is a Jnet0", extra={"sn_nema": gis_item.sn_nema})
+        results = handle_jnet_0(gis_item=gis_item)
+    else:
+        logger.warning("fixture type is unknown", extra={"sn_nema": gis_item.sn_nema})
         results = {
-            "LMS result": f"An error occurred: {str(e)}",
+            "LMS result": f"fixture {gis_item.sn_nema} is not a Jnet fixture",
             "Status": "Failed",
             "Message": "Item Failed to added to LMS OR Azure DB, for more details check the log or the result fields",
         }
-        raise e
-    finally:
-        logger.info("giscloud webhook workflow has finished", extra={"results": results})
 
-        return monday_handler.add_item(
-            board_id=board_id,
-            group_id=group_id,
-            item=monday_item,
-        )
+    logger.info("giscloud webhook workflow has finished", extra={"results": results})
+
+    return monday_handler.add_item(
+        board_id=board_id,
+        group_id=group_id,
+        item=monday_item,
+    )

@@ -56,7 +56,6 @@ class MondayClient:
                 "query": query,
             },
         ).json()
-        print(response)
         return response
 
     def add_item(
