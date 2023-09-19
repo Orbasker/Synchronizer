@@ -93,18 +93,6 @@ class AzureDbConnection:
         )
         return f"mssql+pyodbc:///?odbc_connect={conn_params}"
 
-    # def connect(self):
-
-    # self.metadata = MetaData(schema="dbo.tbl_fixtures")
-    # self.metadata.create_all(self.engine)
-    # self.metadata.bind = self.engine
-    # # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
-    # self.tbl_fixtures = Table(
-    #     "tbl_fixtures",
-    #     self.metadata,
-    # )
-    # self.session = Session(self.engine)
-
     def disconnect(self):
         self.conn.close()
         self.engine.dispose()

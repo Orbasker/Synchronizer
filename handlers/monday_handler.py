@@ -10,7 +10,7 @@ class Coordinates:
         self.lat = lat
 
 
-class Item:
+class MondayItem:
     def __init__(
         self,
         sn_nema: str = None,
@@ -63,7 +63,7 @@ class MondayClient:
         self,
         board_id: int,
         group_id: str,
-        item: Item,
+        item: MondayItem,
     ) -> str:
         formatted_date = item.date.strftime("%Y-%m-%d")
         formatted_status = item.lamp_type or "לא ידוע"
@@ -110,7 +110,7 @@ class MondayClient:
         }
         return requests.post(self._base_url, headers=headers, data=payload, files=files)
 
-    def update_item(self, board_id: int, new_item: Item):
+    def update_item(self, board_id: int, new_item: MondayItem):
         formatted_date = new_item.date.strftime("%Y-%m-%d")
         formatted_status = new_item.lamp_type or "לא ידוע"
         formatted_type_switch = new_item.type_switch or ""
