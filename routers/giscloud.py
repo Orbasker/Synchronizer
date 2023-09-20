@@ -106,6 +106,7 @@ def handle_jnet_1(gis_item: GisItem) -> dict:
 
     results = {}
 
+
     if new_sn == "duplicate entry, you can not insert records that already exist":
         logger.info("fixture already exists in LMS", extra={"sn_nema": gis_item.sn_nema})
 
@@ -123,7 +124,9 @@ def handle_jnet_1(gis_item: GisItem) -> dict:
                 exc_info=True,
                 extra={"sn_nema": gis_item.sn_nema, "fixture_info": new_fixture_json},
             )
+
             results["LMS result"] = f"failed to insert fixture {gis_item.sn_nema}"
+
 
     else:
         logger.info("fixture inserted successfully to LMS", extra={"new_sn": new_sn, "sn_nema": gis_item.sn_nema})

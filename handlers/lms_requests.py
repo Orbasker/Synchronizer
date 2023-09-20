@@ -217,6 +217,8 @@ class LMSRequest:
         )
 
     def update_device(self, group_id, serial_number, device_data):
+        # asosicate = self.associate_device_to_group(group_id=259, serial_number=serial_number, associate=0)
+        # asosicate.raise_for_status()
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
         results = self.make_authenticated_request(url, "PUT", json_data=device_data)
         # results.raise_for_status()
@@ -233,18 +235,13 @@ class LMSRequest:
 
     def associate_device_to_group(self, group_id, serial_number, associate=0):
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}?associate={associate}"
-        response = self.make_authenticated_request(url, "POST")
-        return response
+        return self.make_authenticated_request(url, "POST")
 
     def get_all_types(self):
-        url = f"{self.BASE_URL}/led/type"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_all_light_profiles_2("/led/type")
 
     def get_type_by_id(self, type_id):
-        url = f"{self.BASE_URL}/led/type/{type_id}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/type/", type_id)
 
     def create_gateway(
         self,
@@ -268,14 +265,10 @@ class LMSRequest:
         return response.json()
 
     def get_all_gateways(self):
-        url = f"{self.BASE_URL}/led/gateways"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_all_light_profiles_2("/led/gateways")
 
     def get_gateway_by_id(self, id_gateway):
-        url = f"{self.BASE_URL}/led/gateways/{id_gateway}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/gateways/", id_gateway)
 
     def update_gateway(
         self,
@@ -300,14 +293,10 @@ class LMSRequest:
         return response.json()
 
     def get_all_commands(self):
-        url = f"{self.BASE_URL}/led/commands"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_all_light_profiles_2("/led/commands")
 
     def get_command_by_id(self, idCommand):
-        url = f"{self.BASE_URL}/led/commands/{idCommand}"
-        response = self.make_authenticated_request(url, "GET")
-        return response.json()
+        return self._extracted_from_get_light_profile_2("/led/commands/", idCommand)
 
     def send_group_command(self, group_id, opcode, arg1=None):
         return self._extracted_from_send_gateway_command_2("/led/groups/", group_id, opcode, arg1)
@@ -334,12 +323,20 @@ class LMSRequest:
         return response.json()
 
     def get_all_light_profiles(self):
-        url = f"{self.BASE_URL}/led/profiles"
+        return self._extracted_from_get_all_light_profiles_2("/led/profiles")
+
+    # TODO Rename this here and in `get_all_types`, `get_all_gateways`, `get_all_commands` and `get_all_light_profiles`
+    def _extracted_from_get_all_light_profiles_2(self, arg0):
+        url = f"{self.BASE_URL}{arg0}"
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
     def get_light_profile(self, idLP):
-        url = f"{self.BASE_URL}/led/profiles/{idLP}"
+        return self._extracted_from_get_light_profile_2("/led/profiles/", idLP)
+
+    # TODO Rename this here and in `get_type_by_id`, `get_gateway_by_id`, `get_command_by_id` and `get_light_profile`
+    def _extracted_from_get_light_profile_2(self, arg0, arg1):
+        url = f"{self.BASE_URL}{arg0}{arg1}"
         response = self.make_authenticated_request(url, "GET")
         return response.json()
 
@@ -356,38 +353,32 @@ class LMSRequest:
 
     def associate_light_profile_to_group(self, idLP, idGroup):
         url = f"{self.BASE_URL}/led/profiles/{idLP}/groups/{idGroup}"
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "POST", headers=headers)
-        return response.json()
+        return self._extracted_from_get_devices_by_group_3(url, "POST")
 
     def get_light_profiles_associated_to_groups(self):
         url = f"{self.BASE_URL}/led/profiles/groups"
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "GET", headers=headers)
-        return response.json()
+        return self._extracted_from_get_devices_by_group_3(url, "GET")
 
     def reassociate_light_profile_to_group(self, idLP, idGroup):
         url = f"{self.BASE_URL}/led/profiles/{idLP}/groups/{idGroup}"
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "PUT", headers=headers)
-        return response.json()
+        return self._extracted_from_get_devices_by_group_3(url, "PUT")
 
     def delete_associated_light_profile_from_group(self, idLP, idGroup):
         url = f"{self.BASE_URL}/led/profiles/{idLP}/groups/{idGroup}"
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "DELETE", headers=headers)
-        return response.json()
+        return self._extracted_from_get_devices_by_group_3(url, "DELETE")
 
     def get_device_credentials(self, base_url):
         url = f"{base_url}/led/devices/credentials"
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "GET", headers=headers)
-        return response.json()
+        return self._extracted_from_get_devices_by_group_3(url, "GET")
 
     def get_devices_by_group(self, base_url, id_group):
         url = f"{base_url}/led/groups/{id_group}/devicelist"
+        return self._extracted_from_get_devices_by_group_3(url, "GET")
+
+    # TODO Rename this here and in `associate_light_profile_to_group`, `get_light_profiles_associated_to_groups`, `reassociate_light_profile_to_group`, `delete_associated_light_profile_from_group`, `get_device_credentials` and `get_devices_by_group`
+    def _extracted_from_get_devices_by_group_3(self, url, arg1):
         headers = {"Authorization": f"Bearer {self.token}"}
-        response = self.make_authenticated_request(url, "GET", headers=headers)
+        response = self.make_authenticated_request(url, arg1, headers=headers)
         return response.json()
 
     def report_consumption(self, base_url, start_date, end_date, id_groups):
