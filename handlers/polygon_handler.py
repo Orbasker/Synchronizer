@@ -15,6 +15,8 @@ Jnet_0_gw_id = {
 
 
 def get_getway_id(lon, lat) -> str:
-    gw_df = gdf.query(f"geometry.contains(@{Point(lon, lat)})")
+    point = Point(lon, lat)
+    print(point)
+    gw_df = gdf.query("geometry.contains(@point)")
     gw_index = gw_df["id"].values[0]
     return Jnet_0_gw_id[str(gw_index)]

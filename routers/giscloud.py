@@ -178,13 +178,14 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
         if db_conn.fixture_exists(gis_item.sn_nema):
             fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=gis_item.sn_nema)
             logger.info("fixture updated successfully to azure DB", extra={"fixture_id_res": fixture_id_res})
-            device_res = lms_request.update_device(
-                group_id=259,
-                device_data=new_device.to_json(),
-                serial_number=new_device.get_serial_number(),
-            )
-            results["LMS result"] = f"{gis_item.sn_nema} updated to LMS, result = {device_res}"
-            logger.info("fixture updated successfully to LMS", extra={"device_res": device_res})
+            # device_res = lms_request.delete_device(group_id=259, serial_number=gis_item.sn_nema)
+            # device_res = lms_request.create_device(
+            #     group_id=259,
+            #     device_data=new_device.to_json(),
+            #     serial_number=new_device.get_serial_number(),
+            # )
+            # results["LMS result"] = f"{gis_item.sn_nema} updated to LMS, result = {device_res}"
+            logger.info("fixture updated successfully to LMS")
         else:
             fixture_id_res = db_conn.insert_fixture(new_fixture)
             results["JSC result"] = f"{gis_item.sn_nema} inserted to JSC, result = {fixture_id_res}"
@@ -200,7 +201,7 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
         db_conn.conn.rollback()
         logger.error("failed to insert fixture", exc_info=True, extra={"fixture_info": fixture_dict})
         results["JSC result"] = f"Failed to insert fixture {gis_item.sn_nema} to DB: {e}"
-    if gis_item.old_sn:
+    if gis_item.old_sn is not None and gis_item.old_sn != "None":
         try:
             lms_request.delete_device(group_id=259, serial_number=gis_item.old_sn)
             db_conn.delete_fixture(fixture_name=gis_item.old_sn)
