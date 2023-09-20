@@ -192,7 +192,7 @@ async def new_item(request: Request):
                     fixture_id_res = db_conn.insert_fixture(new_fixture)
                     logger.info(
                         "fixture inserted successfully to azure DB",
-                        extra={"fixture_id_res": fixture_id_res, "fixure_info": new_fixture.to_json()},
+                        extra={"fixture_id_res": fixture_id_res, "fixure_info": new_fixture.to_dict()},
                     )
                     device_res = lms_request.create_device(group_id=259, device_data=new_device.to_json())
                     logger.info("fixture inserted successfully to LMS", extra={"device_res": device_res})
@@ -205,7 +205,7 @@ async def new_item(request: Request):
                         "fixture Updated in azure DB but had conflict with LMS + possibly there is not much change in the fixture",
                         extra={
                             "sn_nema": sn_nema,
-                            "fixture_info": new_fixture.to_json(),
+                            "fixture_info": new_fixture.to_dict(),
                             "device_info": new_device.to_json(),
                             HTTPException: 409,
                         },
