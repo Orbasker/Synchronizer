@@ -74,6 +74,7 @@ async def new_item(request: Request):
     try:
 
         item_data_request = await request.json()
+        print(item_data_request)
         logger.info("new webhook request from giscloud", extra={"item_data_request": item_data_request})
         item_data = item_data_request.get("data")
         gis_feature_id = item_data.get("ogc_fid")
