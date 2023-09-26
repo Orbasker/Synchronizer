@@ -14,6 +14,11 @@ repos:
         exclude: cookiecutter_template/
         args: ["--profile", "black"]
 
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.16.12
+    hooks:
+      - id: typos
+
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.4.0
     hooks:
@@ -29,3 +34,9 @@ repos:
     rev: "v3.0.3"
     hooks:
       - id: prettier
+
+  - repo: https://github.com/sourcery-ai/sourcery
+    rev: v1.9.0
+    hooks:
+      - id: sourcery
+        args: [--diff=git diff HEAD, --no-summary, --fix]

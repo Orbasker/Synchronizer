@@ -4,29 +4,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from logging import getLogger
 
-import geopandas as gpd
 import pandas as pd
-from dotenv import load_dotenv
-from shapely.geometry import Point
 from sqlalchemy import MetaData, Table, create_engine, inspect
 from sqlalchemy.orm import Session
 
-# Load your polygon data, replace 'your_polygon_data.shp' with your file
-gdf = gpd.read_file("Jnet_0_gws.shp")
-# log_file = open("app.log", "a")
-
 logger = getLogger(__name__)
-
-
-def get_getway_id(lon, lat):
-    point = Point(lon, lat)
-    return next(
-        (row["ID"] for index, row in gdf.iterrows() if point.within(row["geometry"])),
-        None,
-    )
-
-
-load_dotenv()
 
 
 class Fixture:
@@ -36,7 +18,6 @@ class Fixture:
         self.longitude = longitude
         self.id_gateway = id_gateway
         self.ident = ident
-        # self.__dict__.update(kwargs)
 
     def to_dict(self):
         return {
@@ -44,22 +25,17 @@ class Fixture:
             "latitude": self.latitude,
             "longitude": self.longitude,
             "id_gateway": self.id_gateway,
-            "ident": self.ident
-            # Add other properties here if needed
+            "ident": self.ident,
         }
 
 
 class DecimalEncoder(json.JSONEncoder):
-    """JSON encoder for Decimal and datetime objects."""
-
     def default(self, o):
         return str(o) if isinstance(o, Decimal) else super(DecimalEncoder, self).default(o)
 
 
 @dataclass(frozen=True)
 class ConnectionSettings:
-    """Connection Settings."""
-
     server: str
     database: str
     username: str
@@ -93,18 +69,6 @@ class AzureDbConnection:
         )
         return f"mssql+pyodbc:///?odbc_connect={conn_params}"
 
-    # def connect(self):
-
-    # self.metadata = MetaData(schema="dbo.tbl_fixtures")
-    # self.metadata.create_all(self.engine)
-    # self.metadata.bind = self.engine
-    # # self.tbl_fixtures = self.metadata.tables["tbl_fixtures"]
-    # self.tbl_fixtures = Table(
-    #     "tbl_fixtures",
-    #     self.metadata,
-    # )
-    # self.session = Session(self.engine)
-
     def disconnect(self):
         self.conn.close()
         self.engine.dispose()
@@ -127,7 +91,7 @@ class AzureDbConnection:
             logger.info("fixture was added successfully", extra={"fixture": fixture.name})
             return result.scalar()
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture.name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture.name})
 
     def delete_fixture(self, fixture_id=None, fixture_name=None):
         try:
@@ -138,7 +102,7 @@ class AzureDbConnection:
             logger.info("fixture was deleted successfully", extra={"fixture": fixture_name})
             return self.conn.execute(query)
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture_name})
             return None
 
     def update_fixture(self, fixture: Fixture, fixture_name=None, fixture_id=None):
@@ -158,11 +122,5 @@ class AzureDbConnection:
             results = output.fetchall()
             return len(results) != 0
         except Exception:
-            logger.error("an error occured", exc_info=True, extra={"fixture": fixture_name})
+            logger.error("an error occurred", exc_info=True, extra={"fixture": fixture_name})
             return False
-
-
-# if __name__ == "__main__":
-# print(get_getway_id(34.791, 32.085))
-
-# log_file.close()
