@@ -23,4 +23,4 @@ class GisCloudHandler:
             params={
                 "api_key": self.api_key,
             },
-        )._content
+        ).content

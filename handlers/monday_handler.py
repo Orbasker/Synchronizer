@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 import requests
+from requests import Response
 
 
 class Coordinates:
@@ -49,14 +50,13 @@ class MondayClient:
         }
 
     def _query(self, query):
-        response = requests.post(
+        return requests.post(
             url=self._base_url,
             headers=self._headers,
             json={
                 "query": query,
             },
         ).json()
-        return response
 
     def add_item(
         self,
@@ -87,7 +87,7 @@ class MondayClient:
         self,
         item_id: str,
         image_raw_data: bytes,
-    ) -> None:
+    ) -> Response:
         payload = {
             "query": "mutation ($file: File!) { add_file_to_column (file: $file, item_id: "
             + item_id
@@ -107,7 +107,12 @@ class MondayClient:
         headers = {
             "Authorization": self.api_key,
         }
-        return requests.post(self._base_url, headers=headers, data=payload, files=files)
+        return requests.post(
+            self._base_url,
+            headers=headers,
+            data=payload,
+            files=files,
+        )
 
     def update_item(self, board_id: int, new_item: MondayItem):
         formatted_date = new_item.date.strftime("%Y-%m-%d")

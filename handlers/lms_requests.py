@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from hashlib import md5
 
 import requests
@@ -6,6 +7,46 @@ from dotenv import load_dotenv
 from pydantic import HttpUrl
 
 load_dotenv()
+
+
+@dataclass
+class OpCodes:
+    arg1: int = None
+    arg2: int = None
+    arg3: int = None
+    arg4: int = None
+    arg5: int = None
+    arg6: int = None
+    arg7: int = None
+    arg8: int = None
+    arg9: int = None
+    arg10: int = None
+    arg11: int = None
+    arg12: int = None
+    arg13: int = None
+    arg14: int = None
+    arg15: int = None
+    arg16: int = None
+
+    def to_json(self):
+        return {
+            "arg1": self.arg1,
+            "arg2": self.arg2,
+            "arg3": self.arg3,
+            "arg4": self.arg4,
+            "arg5": self.arg5,
+            "arg6": self.arg6,
+            "arg7": self.arg7,
+            "arg8": self.arg8,
+            "arg9": self.arg9,
+            "arg10": self.arg10,
+            "arg11": self.arg11,
+            "arg12": self.arg12,
+            "arg13": self.arg13,
+            "arg14": self.arg14,
+            "arg15": self.arg15,
+            "arg16": self.arg16,
+        }
 
 
 class DeviceData:
@@ -103,7 +144,7 @@ class LMSRequest:
         response.raise_for_status()
         try:
             return response.json()
-        except Exception:
+        except ValueError:
             return response
 
     def get_all_groups(self):
@@ -128,24 +169,8 @@ class LMSRequest:
         sn: int = 10315004,
     ):
         url = f"{self.BASE_URL}/led/devices/{sn}/commands/42"
-        json_data = {
-            "arg1": level,
-            "arg2": None,
-            "arg3": None,
-            "arg4": None,
-            "arg5": None,
-            "arg6": None,
-            "arg7": None,
-            "arg8": None,
-            "arg9": None,
-            "arg10": None,
-            "arg11": None,
-            "arg12": None,
-            "arg13": None,
-            "arg14": None,
-            "arg15": None,
-            "arg16": None,
-        }
+        json_data = OpCodes(arg1=level).to_json()
+
         return self.make_authenticated_request(url, "POST", json_data)
 
     def logout(self, site_name: str = "Jerusalem - Israel"):
@@ -217,19 +242,15 @@ class LMSRequest:
         )
 
     def update_device(self, group_id, serial_number, device_data):
-        # asosicate = self.associate_device_to_group(group_id=259, serial_number=serial_number, associate=0)
-        # asosicate.raise_for_status()
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
-        results = self.make_authenticated_request(url, "PUT", json_data=device_data)
-        # results.raise_for_status()
-        return results
+        return self.make_authenticated_request(url, "PUT", json_data=device_data)
 
     def delete_device(self, group_id, serial_number):
         if serial_number == "":
             return "Serial number is empty."
         url = f"{self.BASE_URL}/led/groups/{group_id}/devices/{serial_number}"
         response = self.make_authenticated_request(url, "DELETE")
-        if response.status_code == 200:
+        if response.ok:
             return "Device deleted successfully."
         return "Device could not be deleted."
 
@@ -261,7 +282,11 @@ class LMSRequest:
             "idNetworkType": id_network_type,
             "macAddress": mac_address,
         }
-        response = self.make_authenticated_request(url, "POST", json_data=data)
+        response = self.make_authenticated_request(
+            url,
+            "POST",
+            json_data=data,
+        )
         return response.json()
 
     def get_all_gateways(self):
@@ -295,8 +320,8 @@ class LMSRequest:
     def get_all_commands(self):
         return self._extracted_from_get_all_light_profiles_2("/led/commands")
 
-    def get_command_by_id(self, idCommand):
-        return self._extracted_from_get_light_profile_2("/led/commands/", idCommand)
+    def get_command_by_id(self, id_command):
+        return self._extracted_from_get_light_profile_2("/led/commands/", id_command)
 
     def send_group_command(self, group_id, opcode, arg1=None):
         return self._extracted_from_send_gateway_command_2("/led/groups/", group_id, opcode, arg1)

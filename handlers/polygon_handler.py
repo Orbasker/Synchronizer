@@ -1,11 +1,14 @@
+import logging
 from pathlib import Path
 
 import geopandas as gpd
 from shapely.geometry import Point
 
+logger = logging.getLogger(__name__)
+
 gdf = gpd.read_file(Path("geo/or_yehuda.shp").resolve())
 
-Jnet_0_gw_id = {
+jnet_0_gw_id = {
     "1": "0621.1003",
     "2": "0621.1003",
     "3": "0919.2002",
@@ -14,9 +17,9 @@ Jnet_0_gw_id = {
 }
 
 
-def get_getway_id(lon, lat) -> str:
-    point = Point(lon, lat)
-    print(point)
+def get_gateway_id(lon, lat) -> str:
+    point = Point(lon, lat)  # ignore mypy error
+    logger.info("point", extra={"point": point})
     gw_df = gdf.query("geometry.contains(@point)")
     gw_index = gw_df["id"].values[0]
-    return Jnet_0_gw_id[str(gw_index)]
+    return jnet_0_gw_id[str(gw_index)]
