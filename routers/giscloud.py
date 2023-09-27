@@ -307,4 +307,7 @@ async def new_item(payload: Payload):
         group_id=group_id,
         item=monday_item,
     )
-    return {"monday_item_id": monday_item_id, "results": results}
+    return {
+        "monday_item_id": monday_item_id,
+        "results": results,
+    }
