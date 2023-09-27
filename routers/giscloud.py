@@ -7,7 +7,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from dateutil import parser
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from requests.exceptions import HTTPError
 
@@ -61,7 +61,7 @@ class GisItem:
     jnet_type: str
 
 
-async def extract_gis_item(req: Request) -> GisItem:
+async def extract_gis_item(req) -> GisItem:
     request_body = json.loads(req.json())
 
     logger.info("extracting gis item from request body", extra={"request_body": request_body})
