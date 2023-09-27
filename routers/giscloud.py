@@ -279,7 +279,7 @@ async def new_item(request: Request):
         }
 
     logger.info("giscloud webhook workflow has finished", extra={"results": results})
-
+    monday_item.webhook_response = results
     return monday_handler.add_item(
         board_id=board_id,
         group_id=group_id,
