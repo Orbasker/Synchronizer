@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from logging import getLogger
+from typing import Optional
 
 from dateutil import parser
 from fastapi import APIRouter, HTTPException, Request
@@ -63,7 +64,10 @@ async def extract_gis_item(req: Request) -> GisItem:
     request_body = await req.json()
 
     if "data" not in request_body:
-        raise HTTPException(status_code=400, detail="Invalid request body")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid request body",
+        )
 
     logger.info("extracting gis item from request body", extra={"request_body": request_body})
 
@@ -160,7 +164,7 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
         latitude=gis_item.coordinate.lat,
         longitude=gis_item.coordinate.long,
         id_gateway=19,
-        ident=polygon_handler.get_getway_id(
+        ident=polygon_handler.get_gateway_id(
             lon=gis_item.coordinate.long,
             lat=gis_item.coordinate.lat,
         ),
@@ -178,14 +182,6 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
         if db_conn.fixture_exists(gis_item.sn_nema):
             fixture_id_res = db_conn.update_fixture(new_fixture, fixture_name=gis_item.sn_nema)
             logger.info("fixture updated successfully to azure DB", extra={"fixture_id_res": fixture_id_res})
-            # device_res = lms_request.delete_device(group_id=259, serial_number=gis_item.sn_nema)
-            # device_res = lms_request.create_device(
-            #     group_id=259,
-            #     device_data=new_device.to_json(),
-            #     serial_number=new_device.get_serial_number(),
-            # )
-            # results["LMS result"] = f"{gis_item.sn_nema} updated to LMS, result = {device_res}"
-            logger.info("fixture updated successfully to LMS")
         else:
             fixture_id_res = db_conn.insert_fixture(new_fixture)
             results["JSC result"] = f"{gis_item.sn_nema} inserted to JSC, result = {fixture_id_res}"
@@ -220,7 +216,7 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
     return results
 
 
-def extract_sn_nema_from_barcode(barcode: str) -> str:
+def extract_sn_nema_from_barcode(barcode: Optional[str]) -> Optional[str]:
     if barcode is not None:
         regex_result = re.search(r"([1-9][0-9]*\d{6,8})", barcode)
         return regex_result.group() if regex_result else barcode
@@ -238,7 +234,6 @@ def assign_jnet_type(regex_result: str) -> str:
 
 @router.post("/giscloud")
 async def new_item(request: Request):
-    results = {}
     logger.info("new webhook request from giscloud")
     gis_item = await extract_gis_item(request)
 

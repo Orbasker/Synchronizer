@@ -54,7 +54,6 @@ class AzureDbConnection:
         self.conn = self.engine.connect()
         self.tbl_fixtures = Table("tbl_fixtures", self.metadata, autoload_with=self.conn)
         self.session = Session(self.engine)
-        # self.conn.begin()
 
     def _construct_connection_string(self) -> str:
         conn_params = urllib.parse.quote_plus(
