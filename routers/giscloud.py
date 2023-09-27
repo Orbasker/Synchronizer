@@ -196,7 +196,7 @@ def handle_jnet_0(gis_item: GisItem) -> dict:
             device_res = lms_request.create_device(group_id=259, device_data=new_device.to_json())
             logger.info("fixture inserted successfully to LMS", extra={"device_res": device_res})
             results["LMS result"] = f"{gis_item.sn_nema} inserted to LMS, result = {device_res}"
-        results["fixture_info"] = new_fixture.to_json()
+        results["fixture_info"] = new_fixture.to_dict()
     except Exception as e:
         db_conn.conn.rollback()
         logger.error("failed to insert fixture", exc_info=True, extra={"fixture_info": fixture_dict})
