@@ -1,12 +1,14 @@
+import json
 import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from logging import getLogger
-from typing import Optional
+from typing import Any, Optional
 
 from dateutil import parser
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, Field
 from requests.exceptions import HTTPError
 
 from handlers import polygon_handler
@@ -18,7 +20,6 @@ from handlers.monday_handler import Coordinates, MondayClient, MondayItem
 logger = getLogger("giscloud")
 
 router = APIRouter()
-
 
 lms_base_url = os.getenv("LMS_API_BASEURL")
 lms_request = LMSRequest(lms_base_url)
@@ -61,13 +62,7 @@ class GisItem:
 
 
 async def extract_gis_item(req: Request) -> GisItem:
-    request_body = await req.json()
-
-    if "data" not in request_body:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid request body",
-        )
+    request_body = json.loads(req.json())
 
     logger.info("extracting gis item from request body", extra={"request_body": request_body})
 
@@ -232,10 +227,36 @@ def assign_jnet_type(regex_result: str) -> str:
         return "Unknown"
 
 
+class PayloadData(BaseModel):
+    __created: int
+    __modified: int
+    __owner: str
+    ogc_fid: str
+    sn_nema: str
+    wkb_geometry: dict[str, Any] = Field(..., alias="wkb_geometry")
+    date: datetime
+    longitude: float
+    latitude: float
+    picture: Optional[str]
+    raw_image: Optional[str]
+    note: Optional[str]
+    old_sn: str
+    type_switches: Optional[str]
+    lamp_type: str
+    svg: Optional[str]
+    _schema: str
+
+
+class Payload(BaseModel):
+    action: str
+    resource: Optional[Any]
+    data: PayloadData
+
+
 @router.post("/giscloud")
-async def new_item(request: Request):
+async def new_item(payload: Payload):
     logger.info("new webhook request from giscloud")
-    gis_item = await extract_gis_item(request)
+    gis_item = await extract_gis_item(payload)
 
     logger.info("initializing monday handler")
     monday_api_key = os.getenv("MONDAY_API_KEY")
@@ -280,8 +301,9 @@ async def new_item(request: Request):
 
     logger.info("giscloud webhook workflow has finished", extra={"results": results})
 
-    return monday_handler.add_item(
+    monday_item_id = monday_handler.add_item(
         board_id=board_id,
         group_id=group_id,
         item=monday_item,
     )
+    return {"monday_item_id": monday_item_id, "results": results}
