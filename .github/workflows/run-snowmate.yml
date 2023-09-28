@@ -20,7 +20,7 @@ jobs:
         uses: snowmate/snowmate-runner-action@latest
         with:
           project-path: .
-          project-id: ${{ secrets.SNOMATE_PROJECT_ID }}
+          project-id: ${{ secrets.SNOWMATE_PROJECT_ID }}
           client-id: ${{ secrets.SNOWMATE_CLIENT_ID }}
           secret-key: ${{ secrets.SNOWMATE_SECRET_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }} # Provided by default by GitHub.
