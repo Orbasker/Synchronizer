@@ -34,6 +34,9 @@ jobs:
           echo "DB_USER=${{secrets.DB_USER}}" >> .env
           echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
           echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
+          echo "SNOWMATE_SECRET_KEY=${{secrets.SNOWMATE_SECRET_KEY}}" >> .env
+          echo "SNOWMATE_CLIENT_ID=${{secrets.SNOWMATE_CLIENT_ID}}" >> .env
+          echo "SNOWMATE_PROJECT_ID=${{secrets.SNOWMATE_PROJECT_ID}}" >> .env
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
