@@ -14,3 +14,4 @@ shapely
 pandas
 python-dateutil
 coloredlogs
+snowmate_collector
