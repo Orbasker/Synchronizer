@@ -36,12 +36,13 @@ async def root():
 if __name__ == "__main__":
     LOCAL = os.getenv("ENV") == "LOCAL"
 
-    snowmate_collector.start(
-        project_path=str(pathlib.Path(__file__).parent),
-        project_id=os.getenv("SNOWMATE_PROJECT_ID"),
-        client_id=os.getenv("SNOWMATE_CLIENT_ID"),
-        secret_key=os.getenv("SNOWMATE_SECRET_KEY"),
-    )
+    if not LOCAL:
+        snowmate_collector.start(
+            project_path=str(pathlib.Path(__file__).parent),
+            project_id=os.getenv("SNOWMATE_PROJECT_ID"),
+            client_id=os.getenv("SNOWMATE_CLIENT_ID"),
+            secret_key=os.getenv("SNOWMATE_SECRET_KEY"),
+        )
 
     uvicorn.run(
         app,
