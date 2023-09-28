@@ -32,9 +32,21 @@ async def root():
 
 
 if __name__ == "__main__":
+    LOCAL = os.getenv("ENV") == "LOCAL"
+    if LOCAL:
+        import pathlib
+
+        import snowmate_collector
+
+        snowmate_collector.start(
+            project_path=str(pathlib.Path(__file__).parent),
+            project_id=os.getenv("SNOWMATE_PROJECT_ID"),
+            client_id=os.getenv("SNOWMATE_CLIENT_ID"),
+            secret_key=os.getenv("SNOWMATE_SECRET_KEY"),
+        )
 
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8080 if os.getenv("ENV") == "LOCAL" else 80,
+        port=8080 if LOCAL else 80,
     )
