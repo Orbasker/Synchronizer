@@ -150,7 +150,7 @@ def handle_jnet_1(gis_item: GisItem) -> dict:
             raise HTTPException(status_code=500) from e
 
     if gis_item.type_switches in LMS_GROUPS.keys():
-        relay_group_id = LMS_GROUPS[gis_item.type_switch]
+        relay_group_id = LMS_GROUPS[gis_item.type_switches]
         group_result = lms_request.associate_device_to_group(group_id=relay_group_id, serial_number=gis_item.sn_nema)
         results["group associate result"] = group_result
 
