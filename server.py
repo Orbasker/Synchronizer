@@ -35,6 +35,7 @@ async def root():
 
 if __name__ == "__main__":
     LOCAL = os.getenv("ENV") == "LOCAL"
+    print("Omer this is for you")
 
     if not LOCAL:
         snowmate_collector.start(
